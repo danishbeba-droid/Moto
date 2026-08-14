@@ -1,230 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#08090b">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>S.O.S Motos</title>
-  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <button class="iconBtn" onclick="toggleMenu()">☰</button>
-    <div class="brand">
-      <strong>S.O.S</strong>
-      <span>MOTOS</span>
-      <small>OFICINA ESPECIALIZADA</small>
-    </div>
-    <button class="iconBtn bell">🔔<i>0</i></button>
+  <header>
+    <h1>🛠️ S.O.S Motos</h1>
+    <p>Gestão & Ordens de Serviço</p>
   </header>
 
   <main>
-    <section id="inicio" class="view active">
-      <div class="hero">
-        <h1>Bom dia, <span>Daniel!</span></h1>
-        <p>Confira o resumo da sua oficina</p>
-      </div>
-
-      <div class="stats">
-        <button class="stat red" onclick="showView('os')">
-          <div class="statIcon">🏍️</div>
-          <strong id="statServico">0</strong>
-          <span>Motos em serviço</span>
-        </button>
-        <button class="stat yellow" onclick="showView('os')">
-          <div class="statIcon">⏱️</div>
-          <strong id="statAprovacao">0</strong>
-          <span>Aguardando aprovação</span>
-        </button>
-        <button class="stat green" onclick="showView('os')">
-          <div class="statIcon">✅</div>
-          <strong id="statConcluidos">0</strong>
-          <span>Serviços concluídos</span>
-        </button>
-      </div>
-
-      <button class="waHero" onclick="showView('whatsapp')">
-        <div class="waIcon">◉</div>
-        <div><b>Orçamentos e avisos no WhatsApp</b><small>Comunicação direta com o cliente</small></div>
-        <span>Enviar</span>
-      </button>
-
-      <div class="sectionTitle"><h2>Acesso rápido</h2></div>
-      <div class="quick">
-        <button onclick="showView('clientes')"><b>♙</b><span>Clientes</span></button>
-        <button onclick="showView('motos')"><b>🏍️</b><span>Motos</span></button>
-        <button onclick="novaOS()"><b>🛠️</b><span>Nova OS</span></button>
-        <button onclick="showView('orcamentos')"><b>▧</b><span>Orçamentos</span></button>
-        <button onclick="showView('whatsapp')"><b>◉</b><span>WhatsApp</span></button>
-        <button onclick="showView('mais')"><b>•••</b><span>Mais</span></button>
-      </div>
-
-      <div class="sectionTitle rowTitle">
-        <h2>Serviços em andamento</h2>
-        <button onclick="showView('os')">Ver todos ›</button>
-      </div>
-      <div id="homeOS" class="list"></div>
+    <!-- Cadastro -->
+    <section class="card">
+      <h2>👤 Cliente e Moto</h2>
+      <input type="text" id="nome" placeholder="Nome do Cliente">
+      <input type="tel" id="telefone" placeholder="WhatsApp (com DDD)">
+      <input type="text" id="modelo" placeholder="Modelo da Moto (ex: Titan 160)">
+      <input type="text" id="placa" placeholder="Placa">
     </section>
 
-    <section id="clientes" class="view">
-      <div id="clientesLista">
-        <div class="pageHead"><h2>Clientes</h2><button class="primary" onclick="novoCliente()">+ Novo</button></div>
-        <input id="buscaCliente" class="search" placeholder="Buscar por nome ou WhatsApp..." oninput="renderClientes()">
-        <div id="listaClientes" class="list"></div>
-      </div>
-      <div id="clienteDetalhe" class="hidden">
-        <div class="pageHead"><button class="secondary" onclick="voltarClientes()">← Voltar</button><button class="primary" onclick="whatsClienteAtual()">WhatsApp</button></div>
-        <div id="clienteFicha"></div>
-      </div>
+    <!-- Checklist -->
+    <section class="card">
+      <h2>📋 Checklist & Valores</h2>
+      <label><input type="checkbox" id="oleo"> Nível do Óleo OK</label><br>
+      <label><input type="checkbox" id="freios"> Freios OK</label><br><br>
+      <textarea id="obs" placeholder="Observações do checklist..."></textarea>
+      
+      <input type="number" id="vPecas" placeholder="Valor Peças (R$)">
+      <input type="number" id="vMaoObra" placeholder="Valor Mão de Obra (R$)">
     </section>
 
-    <section id="motos" class="view">
-      <div class="pageHead"><h2>Motos</h2><button class="primary" onclick="novaMoto()">+ Nova</button></div>
-      <input id="buscaMoto" class="search" placeholder="Buscar por modelo, placa ou cliente..." oninput="renderMotos()">
-      <div id="listaMotos" class="list"></div>
-    </section>
-
-    <section id="os" class="view">
-      <div class="pageHead"><h2>Ordens de Serviço</h2><button class="primary" onclick="novaOS()">+ Nova OS</button></div>
-      <input id="buscaOS" class="search" placeholder="Buscar por cliente, moto, placa ou serviço..." oninput="renderOS()">
-      <div id="listaOS" class="list"></div>
-    </section>
-
-    <section id="orcamentos" class="view">
-      <div class="pageHead"><h2>Orçamentos</h2><button class="primary" onclick="novoOrcamento()">+ Novo</button></div>
-      <input id="buscaOrc" class="search" placeholder="Buscar por cliente ou moto..." oninput="renderOrcamentos()">
-      <div id="listaOrcamentos" class="list"></div>
-    </section>
-
-    <section id="whatsapp" class="view">
-      <div class="pageHead"><h2>WhatsApp</h2></div>
-      <div class="infoCard">
-        <h3>Comunicação com o cliente</h3>
-        <p>Envie OS, orçamento, aprovação e aviso de moto pronta diretamente pelo WhatsApp.</p>
-        <p class="muted">A aprovação automática ficará disponível futuramente com WhatsApp Business API.</p>
-      </div>
-      <div id="listaWhatsApp" class="list"></div>
-    </section>
-
-    <section id="mais" class="view">
-      <div class="pageHead"><h2>Mais</h2></div>
-      <div class="list">
-        <button class="menuCard" onclick="exportarBackup()">⬇️ Exportar backup</button>
-        <label class="menuCard fileLabel">⬆️ Importar backup<input id="backupInput" type="file" accept="application/json" onchange="importarBackup(this)"></label>
-        <button class="menuCard dangerText" onclick="zerarDados()">🗑️ Zerar dados do app</button>
-      </div>
-    </section>
+    <!-- Botão WhatsApp -->
+    <button onclick="enviarWhatsApp()" class="btn-wa">📲 Enviar para o WhatsApp</button>
   </main>
 
-  <button class="fab" onclick="novaOS()">+</button>
-
-  <nav class="bottom">
-    <button class="navBtn active" data-view="inicio" onclick="showView('inicio')"><b>⌂</b><span>Início</span></button>
-    <button class="navBtn" data-view="clientes" onclick="showView('clientes')"><b>♙</b><span>Clientes</span></button>
-    <button class="navBtn center" onclick="novaOS()"><b>+</b><span>Nova OS</span></button>
-    <button class="navBtn" data-view="orcamentos" onclick="showView('orcamentos')"><b>▧</b><span>Orçamentos</span></button>
-    <button class="navBtn" data-view="mais" onclick="showView('mais')"><b>▦</b><span>Mais</span></button>
-  </nav>
-</div>
-
-<div id="modalCliente" class="modal"><div class="sheet">
-  <h2 id="clienteModalTitulo">Novo cliente</h2>
-  <input id="clienteId" type="hidden">
-  <div class="field"><label>Nome</label><input id="clienteNome" placeholder="Nome completo"></div>
-  <div class="field"><label>WhatsApp</label><input id="clienteTel" inputmode="tel" placeholder="(00) 00000-0000"></div>
-  <div class="actions"><button class="secondary" onclick="closeModal('modalCliente')">Cancelar</button><button class="primary" onclick="salvarCliente()">Salvar</button></div>
-</div></div>
-
-<div id="modalMoto" class="modal"><div class="sheet">
-  <h2 id="motoModalTitulo">Nova moto</h2>
-  <input id="motoId" type="hidden">
-  <div class="field"><label>Cliente</label><select id="motoCliente"></select></div>
-  <div class="field"><label>Modelo</label><input id="motoModelo" placeholder="Ex.: Yamaha Fazer 250"></div>
-  <div class="row">
-    <div class="field"><label>Placa</label><input id="motoPlaca" placeholder="ABC1D23"></div>
-    <div class="field"><label>Ano</label><input id="motoAno" placeholder="2024"></div>
-  </div>
-  <div class="row">
-    <div class="field"><label>KM</label><input id="motoKm" inputmode="numeric" placeholder="15230"></div>
-    <div class="field"><label>Cor</label><input id="motoCor" placeholder="Preta"></div>
-  </div>
-  <div class="photoPick">
-    <img id="motoFotoPreview" alt="">
-    <label class="secondary">📷 Tirar foto<input id="motoFotoInput" type="file" accept="image/*" capture="environment" onchange="capturarFotoMoto(this)"></label>
-  </div>
-  <div class="actions"><button class="secondary" onclick="closeModal('modalMoto')">Cancelar</button><button class="primary" onclick="salvarMoto()">Salvar</button></div>
-</div></div>
-
-<div id="modalOS" class="modal"><div class="sheet wide">
-  <h2 id="osModalTitulo">Nova OS</h2>
-  <input id="osId" type="hidden">
-
-  <div class="field"><label>Cliente / Moto</label><select id="osMoto"></select></div>
-
-  <h3 class="subTitle">Checklist de entrada</h3>
-  <div class="photos4">
-    <div><b>Frente</b><div id="fotoFrente" class="photoSlot">Sem foto</div><button class="secondary" onclick="abrirFotoOS('frente')">📷 Foto</button></div>
-    <div><b>Esquerda</b><div id="fotoEsq" class="photoSlot">Sem foto</div><button class="secondary" onclick="abrirFotoOS('esq')">📷 Foto</button></div>
-    <div><b>Direita</b><div id="fotoDir" class="photoSlot">Sem foto</div><button class="secondary" onclick="abrirFotoOS('dir')">📷 Foto</button></div>
-    <div><b>Traseira</b><div id="fotoTras" class="photoSlot">Sem foto</div><button class="secondary" onclick="abrirFotoOS('tras')">📷 Foto</button></div>
-  </div>
-  <input id="osFotoInput" class="hiddenInput" type="file" accept="image/*" capture="environment" onchange="capturarFotoOS(this)">
-  <div class="field"><label>Observações / avarias</label><textarea id="osChecklistObs" placeholder="Riscos, peças quebradas, detalhes na entrada..."></textarea></div>
-
-  <div class="field"><label>Serviço solicitado</label><textarea id="osServico" placeholder="Ex.: troca de óleo e revisão"></textarea></div>
-  <div class="field"><label>Status</label>
-    <select id="osStatus">
-      <option>Em diagnóstico</option>
-      <option>Aguardando aprovação</option>
-      <option>Aprovado</option>
-      <option>Em serviço</option>
-      <option>Pronta</option>
-      <option>Concluído</option>
-      <option>Não aprovado</option>
-    </select>
-  </div>
-
-  <h3 class="subTitle">Peças</h3>
-  <div id="osPecasLista"></div>
-  <button class="secondary full" onclick="adicionarPecaOS()">+ Adicionar peça</button>
-
-  <div class="field"><label>Mão de obra (R$)</label><input id="osMao" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()"></div>
-  <div class="totalBox">Total <b id="osTotal">R$ 0,00</b></div>
-
-  <div class="actions grid2">
-    <button class="secondary" onclick="closeModal('modalOS')">Fechar</button>
-    <button class="primary" onclick="salvarOS()">Salvar OS</button>
-    <button class="waBtn" onclick="enviarOSWhatsApp()">WhatsApp / aprovação</button>
-    <button class="pdfBtn" onclick="gerarPdfOSAtual()">PDF / compartilhar</button>
-  </div>
-</div></div>
-
-<div id="modalOrc" class="modal"><div class="sheet wide">
-  <h2 id="orcModalTitulo">Novo orçamento</h2>
-  <input id="orcId" type="hidden">
-  <div class="field"><label>Cliente</label><input id="orcCliente" placeholder="Nome do cliente"></div>
-  <div class="field"><label>WhatsApp</label><input id="orcTel" inputmode="tel" placeholder="(00) 00000-0000"></div>
-  <div class="field"><label>Modelo da moto</label><input id="orcMoto" placeholder="Ex.: Honda CG 160"></div>
-
-  <h3 class="subTitle">Peças</h3>
-  <div id="orcPecasLista"></div>
-  <button class="secondary full" onclick="adicionarPecaOrc()">+ Adicionar peça</button>
-
-  <div class="field"><label>Mão de obra (R$)</label><input id="orcMao" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOrc()"></div>
-  <div class="field"><label>Validade</label><input id="orcValidade" type="date"></div>
-  <div class="totalBox">Total <b id="orcTotal">R$ 0,00</b></div>
-
-  <div class="actions grid2">
-    <button class="secondary" onclick="closeModal('modalOrc')">Fechar</button>
-    <button class="primary" onclick="salvarOrcamento()">Salvar</button>
-    <button class="waBtn" onclick="enviarOrcWhatsApp()">Enviar WhatsApp</button>
-    <button class="pdfBtn" onclick="gerarPdfOrcAtual()">PDF / compartilhar</button>
-  </div>
-</div></div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
