@@ -1,57 +1,30 @@
-const KEY='SOS_MOTOS_BASE_DEFINITIVA_V1';
-let db=load(),clienteAtual=null,motoAtual=null,fotoMoto='',fotosOS={},fotoOSAlvo='',pecasOS=[],pecasOrc=[];
-function load(){try{return JSON.parse(localStorage.getItem(KEY))||{clientes:[],motos:[],os:[],orcamentos:[]}}catch(e){return{clientes:[],motos:[],os:[],orcamentos:[]}}}
-function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
-function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function num(v){return Number(String(v||0).replace(/\./g,'').replace(',','.'))||0}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function cliente(id){return db.clientes.find(x=>x.id==id)} function moto(id){return db.motos.find(x=>x.id==id)}
-function totalOS(o){return (o.pecas||[]).reduce((s,p)=>s+Number(p.valor||0),0)+Number(o.mao||0)}
-function totalOrc(o){return (o.pecas||[]).reduce((s,p)=>s+Number(p.valor||0),0)+Number(o.mao||0)}
-function badge(s){let c='blue';if(s==='Aguardando aprovação')c='yellow';if(['Aprovado','Pronta','Concluído'].includes(s))c='green';if(s==='Não aprovado')c='red';return `<span class="badge ${c}">${esc(s)}</span>`}
-function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));window.scrollTo(0,0);if(id==='clientes')renderClientes();if(id==='motos')renderMotos();if(id==='os')renderOS();if(id==='orcamentos')renderOrcamentos();if(id==='whatsapp')renderWhatsApp()}
-function openModal(id){document.getElementById(id).classList.add('open')} function closeModal(id){document.getElementById(id).classList.remove('open')}
-function renderAll(){renderHome();renderClientes();renderMotos();renderOS();renderOrcamentos();renderWhatsApp()}
-function renderHome(){stServico.textContent=db.os.filter(o=>['Em diagnóstico','Aprovado','Em serviço'].includes(o.status)).length;stAguard.textContent=db.os.filter(o=>o.status==='Aguardando aprovação').length;stConcl.textContent=db.os.filter(o=>o.status==='Concluído').length;const a=db.os.filter(o=>!['Concluído','Não aprovado'].includes(o.status)).slice(-4).reverse();homeOS.innerHTML=a.length?a.map(o=>{let m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};return `<button class="card" onclick="editarOS(${o.id})"><div class="cardRow"><div class="grow"><h3>${esc(m.modelo||'Moto')}</h3><p>${esc(c.nome||'Cliente')} • ${esc(o.servico)}</p><p>${money(totalOS(o))}</p></div>${badge(o.status)}</div></button>`}).join(''):'<div class="card"><p>Nenhum serviço em andamento.</p></div>'}
-function novoCliente(){clienteId.value='';clienteNome.value='';clienteTel.value='';openModal('modalCliente')}
-function salvarCliente(){if(!clienteNome.value.trim())return alert('Informe o nome.');let id=Number(clienteId.value||0),d={nome:clienteNome.value.trim(),tel:clienteTel.value.trim()};if(id)Object.assign(cliente(id),d);else db.clientes.push({id:Date.now(),...d});save();closeModal('modalCliente')}
-function editarCliente(id){let c=cliente(id);clienteId.value=c.id;clienteNome.value=c.nome;clienteTel.value=c.tel||'';openModal('modalCliente')}
-function renderClientes(){if(!window.listaClientes)return;let t=(buscaCliente.value||'').toLowerCase();let a=db.clientes.filter(c=>`${c.nome} ${c.tel}`.toLowerCase().includes(t));listaClientes.innerHTML=a.length?a.map(c=>{let ms=db.motos.filter(m=>m.clienteId===c.id);return `<div class="card"><button class="cardRow" style="width:100%;background:none;border:0;color:#fff;text-align:left" onclick="abrirCliente(${c.id})"><div class="avatar">${esc((c.nome||'?').slice(0,2).toUpperCase())}</div><div class="grow"><h3>${esc(c.nome)}</h3><p>${esc(c.tel||'Sem WhatsApp')}</p><p>${ms.length} moto(s)</p></div>›</button><div class="mini"><button onclick="editarCliente(${c.id})">Editar</button></div></div>`}).join(''):'<div class="card"><p>Nenhum cliente.</p></div>'}
-function abrirCliente(id){clienteAtual=id;let ms=db.motos.filter(m=>m.clienteId===id);motoAtual=ms[0]?.id||null;clientesListaPane.classList.add('hidden');clienteDetalhePane.classList.remove('hidden');renderClienteFicha()}
-function voltarClientes(){clienteDetalhePane.classList.add('hidden');clientesListaPane.classList.remove('hidden')}
-function whatsClienteAtual(){let c=cliente(clienteAtual);if(c)abrirWhats(c.tel,`Olá ${c.nome}!`)}
-function selecionarMotoCliente(id){motoAtual=id;renderClienteFicha()}
-function renderClienteFicha(){let c=cliente(clienteAtual);if(!c)return;let ms=db.motos.filter(m=>m.clienteId===c.id),m=moto(motoAtual)||ms[0];if(m)motoAtual=m.id;let os=m?db.os.filter(o=>o.motoId===m.id).slice().reverse():[];clienteFicha.innerHTML=`<div class="card"><h3>${esc(c.nome)}</h3><p>${esc(c.tel||'Sem WhatsApp')}</p></div><h3>Motos</h3><div class="list">${ms.map(x=>`<button class="bike ${m&&m.id===x.id?'active':''}" onclick="selecionarMotoCliente(${x.id})">${x.foto?`<img src="${x.foto}">`:''}<div><b>${esc(x.modelo)}</b><br><small>${esc(x.placa||'Sem placa')} • ${esc(x.km||'0')} km</small></div></button>`).join('')||'<div class="card">Nenhuma moto.</div>'}</div>${m?`<h3>Histórico de manutenção</h3><div class="timeline">${os.map(o=>`<div class="time"><button onclick="editarOS(${o.id})"><b>${esc(o.servico)}</b><br><small>${esc(o.status)} • ${money(totalOS(o))}</small></button></div>`).join('')||'<div class="card">Sem histórico.</div>'}</div>`:''}`}
-function preencherClientes(){motoCliente.innerHTML=db.clientes.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('')}
-function novaMoto(){if(!db.clientes.length)return alert('Cadastre um cliente primeiro.');motoId.value='';motoModelo.value='';motoPlaca.value='';motoAno.value='';motoKm.value='';motoCor.value='';fotoMoto='';motoFotoPreview.src='';preencherClientes();openModal('modalMoto')}
-function editarMoto(id){let m=moto(id);preencherClientes();motoId.value=m.id;motoCliente.value=m.clienteId;motoModelo.value=m.modelo;motoPlaca.value=m.placa||'';motoAno.value=m.ano||'';motoKm.value=m.km||'';motoCor.value=m.cor||'';fotoMoto=m.foto||'';motoFotoPreview.src=fotoMoto;openModal('modalMoto')}
-async function capturarFotoMoto(i){let f=i.files?.[0];if(f){fotoMoto=await comprimir(f);motoFotoPreview.src=fotoMoto}}
-function salvarMoto(){if(!motoModelo.value.trim())return alert('Informe o modelo.');let id=Number(motoId.value||0),d={clienteId:Number(motoCliente.value),modelo:motoModelo.value.trim(),placa:motoPlaca.value.trim().toUpperCase(),ano:motoAno.value.trim(),km:motoKm.value.trim(),cor:motoCor.value.trim(),foto:fotoMoto};if(id)Object.assign(moto(id),d);else db.motos.push({id:Date.now(),...d});save();closeModal('modalMoto')}
-function renderMotos(){if(!window.listaMotos)return;let t=(buscaMoto.value||'').toLowerCase();let a=db.motos.filter(m=>{let c=cliente(m.clienteId)||{};return `${m.modelo} ${m.placa} ${c.nome}`.toLowerCase().includes(t)});listaMotos.innerHTML=a.length?a.map(m=>{let c=cliente(m.clienteId)||{};return `<div class="card"><h3>${esc(m.modelo)}</h3><p>${esc(m.placa||'Sem placa')} • ${esc(c.nome||'')}</p><div class="mini"><button onclick="editarMoto(${m.id})">Editar</button></div></div>`}).join(''):'<div class="card">Nenhuma moto.</div>'}
-function preencherMotosOS(){osMoto.innerHTML=db.motos.map(m=>{let c=cliente(m.clienteId)||{};return `<option value="${m.id}">${esc(c.nome)} — ${esc(m.modelo)}</option>`}).join('')}
-function novaOS(){if(!db.motos.length)return alert('Cadastre uma moto primeiro.');osId.value='';preencherMotosOS();osServico.value='';osStatus.value='Em diagnóstico';osChecklistObs.value='';osMao.value='';fotosOS={};pecasOS=[];renderFotosOS();renderPecasOS();atualizarTotalOS();openModal('modalOS')}
-function editarOS(id){let o=db.os.find(x=>x.id===id);preencherMotosOS();osId.value=o.id;osMoto.value=o.motoId;osServico.value=o.servico;osStatus.value=o.status;osChecklistObs.value=o.checklistObs||'';osMao.value=String(o.mao||'').replace('.',',');fotosOS={...(o.fotos||{})};pecasOS=(o.pecas||[]).map(p=>({...p}));renderFotosOS();renderPecasOS();atualizarTotalOS();openModal('modalOS')}
-function abrirFotoOS(l){fotoOSAlvo=l;osFotoInput.click()} async function capturarFotoOS(i){let f=i.files?.[0];if(f){fotosOS[fotoOSAlvo]=await comprimir(f,800,.6);renderFotosOS();i.value=''}}
-function renderFotosOS(){[['frente','fotoFrente'],['esq','fotoEsq'],['dir','fotoDir'],['tras','fotoTras']].forEach(([k,id])=>document.getElementById(id).innerHTML=fotosOS[k]?`<img src="${fotosOS[k]}">`:'Sem foto')}
-function adicionarPecaOS(){pecasOS.push({nome:'',valor:0});renderPecasOS()} function renderPecasOS(){osPecasLista.innerHTML=pecasOS.map((p,i)=>`<div class="piece"><input value="${esc(p.nome)}" placeholder="Peça" oninput="pecasOS[${i}].nome=this.value"><input value="${Number(p.valor||0).toFixed(2).replace('.',',')}" oninput="pecasOS[${i}].valor=num(this.value);atualizarTotalOS()"><button onclick="pecasOS.splice(${i},1);renderPecasOS();atualizarTotalOS()">×</button></div>`).join('')}
-function atualizarTotalOS(){osTotal.textContent=money(pecasOS.reduce((s,p)=>s+Number(p.valor||0),0)+num(osMao.value))}
-function salvarOS(){if(!osServico.value.trim())return alert('Informe o serviço.');let id=Number(osId.value||0),d={motoId:Number(osMoto.value),servico:osServico.value.trim(),status:osStatus.value,checklistObs:osChecklistObs.value.trim(),mao:num(osMao.value),pecas:pecasOS.map(p=>({nome:p.nome.trim(),valor:Number(p.valor||0)})),fotos:{...fotosOS},atualizadoEm:new Date().toISOString()};if(id)Object.assign(db.os.find(x=>x.id===id),d);else db.os.push({id:Date.now(),criadoEm:new Date().toISOString(),...d});save();closeModal('modalOS')}
-function renderOS(){if(!window.listaOS)return;let t=(buscaOS.value||'').toLowerCase();let a=db.os.slice().reverse().filter(o=>{let m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};return `${c.nome} ${m.modelo} ${o.servico}`.toLowerCase().includes(t)});listaOS.innerHTML=a.length?a.map(o=>{let m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};return `<div class="card"><div class="cardRow"><div class="grow"><h3>${esc(c.nome||'')} — ${esc(m.modelo||'')}</h3><p>${esc(o.servico)} • ${money(totalOS(o))}</p></div>${badge(o.status)}</div><div class="mini"><button onclick="editarOS(${o.id})">Abrir</button><button onclick="enviarOSPorId(${o.id})">WhatsApp</button></div></div>`}).join(''):'<div class="card">Nenhuma OS.</div>'}
-function novoOrcamento(){orcId.value='';orcCliente.value='';orcTel.value='';orcMoto.value='';orcMao.value='';pecasOrc=[{nome:'',valor:0}];let d=new Date();d.setDate(d.getDate()+7);orcValidade.value=d.toISOString().slice(0,10);renderPecasOrc();atualizarTotalOrc();openModal('modalOrc')}
-function editarOrcamento(id){let o=db.orcamentos.find(x=>x.id===id);orcId.value=o.id;orcCliente.value=o.cliente;orcTel.value=o.tel;orcMoto.value=o.moto;orcMao.value=String(o.mao||'').replace('.',',');orcValidade.value=o.validade;pecasOrc=o.pecas.map(p=>({...p}));renderPecasOrc();atualizarTotalOrc();openModal('modalOrc')}
-function adicionarPecaOrc(){pecasOrc.push({nome:'',valor:0});renderPecasOrc()} function renderPecasOrc(){orcPecasLista.innerHTML=pecasOrc.map((p,i)=>`<div class="piece"><input value="${esc(p.nome)}" placeholder="Peça" oninput="pecasOrc[${i}].nome=this.value"><input value="${Number(p.valor||0).toFixed(2).replace('.',',')}" oninput="pecasOrc[${i}].valor=num(this.value);atualizarTotalOrc()"><button onclick="pecasOrc.splice(${i},1);renderPecasOrc();atualizarTotalOrc()">×</button></div>`).join('')}
-function atualizarTotalOrc(){orcTotal.textContent=money(pecasOrc.reduce((s,p)=>s+Number(p.valor||0),0)+num(orcMao.value))}
-function salvarOrcamento(){if(!orcCliente.value.trim())return alert('Informe o cliente.');let id=Number(orcId.value||0),d={cliente:orcCliente.value.trim(),tel:orcTel.value.trim(),moto:orcMoto.value.trim(),pecas:pecasOrc.map(p=>({nome:p.nome.trim(),valor:Number(p.valor||0)})),mao:num(orcMao.value),validade:orcValidade.value};if(id)Object.assign(db.orcamentos.find(x=>x.id===id),d);else db.orcamentos.push({id:Date.now(),...d});save();closeModal('modalOrc')}
-function renderOrcamentos(){if(!window.listaOrcamentos)return;let t=(buscaOrc.value||'').toLowerCase();let a=db.orcamentos.slice().reverse().filter(o=>`${o.cliente} ${o.moto}`.toLowerCase().includes(t));listaOrcamentos.innerHTML=a.length?a.map(o=>`<div class="card"><h3>${esc(o.cliente)}</h3><p>${esc(o.moto)} • ${money(totalOrc(o))}</p><div class="mini"><button onclick="editarOrcamento(${o.id})">Editar</button><button onclick="enviarOrcPorId(${o.id})">WhatsApp</button></div></div>`).join(''):'<div class="card">Nenhum orçamento.</div>'}
-function abrirWhats(tel,text){let n=String(tel||'').replace(/\D/g,'');if(n&&!n.startsWith('55'))n='55'+n;window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`,'_blank')}
-function textoOS(o){let m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};return `S.O.S MOTOS\nCliente: ${c.nome||''}\nMoto: ${m.modelo||''}\nServiço: ${o.servico}\nStatus: ${o.status}\nTOTAL: ${money(totalOS(o))}\n\nResponda: ✅ APROVADO ou ❌ NÃO APROVADO`}
-function enviarOSPorId(id){let o=db.os.find(x=>x.id===id),m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};abrirWhats(c.tel,textoOS(o))}
-function enviarOSWhatsApp(){salvarOS();let o=db.os[db.os.length-1];if(o)enviarOSPorId(o.id)}
-function textoOrc(o){return `S.O.S MOTOS - ORÇAMENTO\nCliente: ${o.cliente}\nMoto: ${o.moto}\n${o.pecas.map((p,i)=>`${i+1}. ${p.nome} — ${money(p.valor)}`).join('\n')}\nMão de obra: ${money(o.mao)}\nTOTAL: ${money(totalOrc(o))}`}
-function enviarOrcPorId(id){let o=db.orcamentos.find(x=>x.id===id);abrirWhats(o.tel,textoOrc(o))} function enviarOrcWhatsApp(){salvarOrcamento();let o=db.orcamentos[db.orcamentos.length-1];if(o)enviarOrcPorId(o.id)}
-function renderWhatsApp(){if(!window.listaWhatsApp)return;let a=db.os.filter(o=>['Aguardando aprovação','Pronta'].includes(o.status)).slice().reverse();listaWhatsApp.innerHTML=a.length?a.map(o=>{let m=moto(o.motoId)||{},c=cliente(m.clienteId)||{};return `<div class="card"><h3>${esc(c.nome||'')} — ${esc(m.modelo||'')}</h3><p>${esc(o.status)}</p><button class="waBtn" onclick="enviarOSPorId(${o.id})">Abrir WhatsApp</button></div>`}).join(''):'<div class="card">Nenhuma comunicação pendente.</div>'}
-function comprimir(file,max=900,q=.7){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',q))};im.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
-function exportarBackup(){let a=document.createElement('a'),b=new Blob([JSON.stringify(db)],{type:'application/json'});a.href=URL.createObjectURL(b);a.download='sos-motos-backup.json';a.click()}
-function importarBackup(i){let f=i.files?.[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);save()}catch(e){alert('Arquivo inválido')}};r.readAsText(f)}
-function zerarDados(){if(confirm('Apagar todos os dados?')){localStorage.removeItem(KEY);db=load();renderAll()}}
-renderAll();
+const toast=document.getElementById('toast');
+let toastTimer=null;
+
+function showToast(text){
+  clearTimeout(toastTimer);
+  toast.textContent=text;
+  toast.classList.add('show');
+  toastTimer=setTimeout(()=>toast.classList.remove('show'),1800);
+}
+
+function future(name){
+  showToast(name+' — será ativado na próxima etapa.');
+}
+
+document.querySelectorAll('[data-action]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const action=btn.dataset.action;
+    if(action==='Início'){
+      showToast('Tela inicial funcionando.');
+      return;
+    }
+    future(action);
+  });
+});
+
+document.getElementById('menuBtn').addEventListener('click',()=>future('Menu'));
+document.getElementById('bellBtn').addEventListener('click',()=>future('Notificações'));
+document.getElementById('waHero').addEventListener('click',()=>future('WhatsApp'));
+document.getElementById('verTodosBtn').addEventListener('click',()=>future('Ordens de Serviço'));
+document.getElementById('fabBtn').addEventListener('click',()=>future('Nova OS'));
