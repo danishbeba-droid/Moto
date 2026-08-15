@@ -113,6 +113,19 @@
       </div>
 
     </section>
+
+<section id="clientes" class="view">
+  <div class="pageHead">
+    <h2>Clientes</h2>
+    <button id="novoClienteBtn" class="primary">+ Novo</button>
+  </div>
+
+  <input id="buscaCliente" class="search" type="search"
+         placeholder="Buscar por nome ou WhatsApp...">
+
+  <div id="listaClientes" class="list"></div>
+</section>
+
   </main>
 
   <button id="fabBtn" class="fab" aria-label="Nova OS">+</button>
@@ -135,6 +148,33 @@
     </button>
   </nav>
 
+</div>
+
+
+<div id="modalCliente" class="modal">
+  <div class="sheet">
+    <div class="modalHead">
+      <h2 id="tituloCliente">Novo cliente</h2>
+      <button id="fecharClienteBtn" class="closeBtn" aria-label="Fechar">×</button>
+    </div>
+
+    <input id="clienteId" type="hidden">
+
+    <div class="field">
+      <label for="clienteNome">Nome</label>
+      <input id="clienteNome" type="text" placeholder="Nome completo">
+    </div>
+
+    <div class="field">
+      <label for="clienteWhats">WhatsApp</label>
+      <input id="clienteWhats" type="tel" inputmode="tel" placeholder="(00) 00000-0000">
+    </div>
+
+    <div class="modalActions">
+      <button id="cancelarClienteBtn" class="secondary">Cancelar</button>
+      <button id="salvarClienteBtn" class="primary">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
