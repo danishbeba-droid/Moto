@@ -9,6 +9,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.view.WindowInsets;
 
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://danishbeba-droid.github.io/Moto/";
@@ -18,8 +19,21 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getWindow().setStatusBarColor(Color.BLACK);
+        getWindow().setNavigationBarColor(Color.BLACK);
+
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(7, 8, 10));
+        webView.setClipToPadding(true);
+        webView.setOnApplyWindowInsetsListener((view, insets) -> {
+            view.setPadding(
+                0,
+                insets.getSystemWindowInsetTop(),
+                0,
+                insets.getSystemWindowInsetBottom()
+            );
+            return insets;
+        });
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
@@ -29,6 +43,9 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
+        settings.setTextZoom(100);
+        settings.setUseWideViewPort(false);
+        settings.setLoadWithOverviewMode(false);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
