@@ -417,6 +417,11 @@ main{padding:14px}
 .detailLine{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#b9bec7;font-size:10px}
 .detailLine.total{padding-top:9px;border-top:1px solid var(--line);color:#fff;font-size:13px}
 .shareOS{width:100%;margin-top:12px;padding:12px;border:1px solid #24713b;border-radius:10px;background:#102b18;color:#70e68e;font-weight:900}
+.osActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.editOS,.finishOS{padding:11px;border-radius:10px;font-weight:900}
+.editOS{border:1px solid #46505e;background:#191c21;color:#fff}
+.finishOS{border:1px solid #9b741d;background:#302408;color:#ffd26b}
+.lockedOS{margin-top:12px;padding:11px;border:1px solid #2f793e;border-radius:10px;background:#102b18;color:#70e68e;font-size:10px;font-weight:850;text-align:center}
 @media(max-width:380px){.valueGrid{grid-template-columns:1fr}.checkGrid{grid-template-columns:1fr}.partRow{grid-template-columns:minmax(0,1fr) 95px 32px}}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
@@ -573,7 +578,7 @@ main{padding:14px}
 <section id="novaOS" class="view">
   <div class="detailTop">
     <button type="button" class="secondary" onclick="showView('inicio')">‹ Cancelar</button>
-    <h2 class="formTitle">Nova OS</h2>
+    <h2 id="osFormTitle" class="formTitle">Nova O.S.</h2>
   </div>
 
   <div class="formCard">
@@ -613,6 +618,7 @@ main{padding:14px}
       <select id="osStatus">
         <option>Em diagnóstico</option>
         <option>Aguardando aprovação</option>
+        <option>Não aprovada</option>
         <option>Aprovada</option>
         <option>Em serviço</option>
         <option>Concluída</option>
@@ -625,7 +631,7 @@ main{padding:14px}
       <strong id="osTotal">R$ 0,00</strong>
     </div>
 
-    <button type="button" class="primary saveFull" onclick="salvarOS()">Salvar OS</button>
+    <button id="salvarOSBtn" type="button" class="primary saveFull" onclick="salvarOS()">Salvar O.S.</button>
   </div>
 </section>
 
@@ -756,6 +762,7 @@ let ordens=carregarOS();
 let clienteSelecionadoId=0;
 let motoSelecionadaId=0;
 let osSelecionadaId=0;
+let osEditandoId=0;
 let retornoOS='ordens';
 let toastTimer=null;
 
@@ -1133,6 +1140,14 @@ function money(valor){
   return Number(valor||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 
+function preencherClientesOS(){
+  el('osCliente').innerHTML=clientes
+    .filter(c=>motos.some(m=>m.clienteId===c.id))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
+    .join('');
+}
+
 function abrirNovaOS(){
   if(!clientes.length){
     showToast('Cadastre um cliente primeiro.');
@@ -1144,12 +1159,10 @@ function abrirNovaOS(){
     return;
   }
 
-  el('osCliente').innerHTML=clientes
-    .filter(c=>motos.some(m=>m.clienteId===c.id))
-    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
-    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
-    .join('');
-
+  osEditandoId=0;
+  preencherClientesOS();
+  el('osFormTitle').textContent='Nova O.S.';
+  el('salvarOSBtn').textContent='Salvar O.S.';
   el('osServico').value='';
   el('osChecklistTexto').value='';
   el('osPecasLista').innerHTML='';
@@ -1157,6 +1170,33 @@ function abrirNovaOS(){
   el('osMaoObra').value='';
   el('osStatus').value='Em diagnóstico';
   carregarMotosOS();
+  atualizarTotalOS();
+  showView('novaOS');
+}
+
+function editarOS(id){
+  const o=ordens.find(x=>x.id===Number(id));
+  if(!o)return;
+  if(o.finalizada){
+    showToast('Esta O.S. está finalizada e não pode ser editada.');
+    return;
+  }
+
+  osEditandoId=o.id;
+  preencherClientesOS();
+  el('osCliente').value=String(o.clienteId);
+  carregarMotosOS();
+  el('osMoto').value=String(o.motoId);
+  el('osFormTitle').textContent='Editar O.S. #'+String(o.id).slice(-6);
+  el('salvarOSBtn').textContent='Salvar alterações';
+  el('osChecklistTexto').value=Array.isArray(o.checklist)?o.checklist.join(' • '):String(o.checklist||'');
+  el('osServico').value=textoServicoOS(o);
+  el('osPecasLista').innerHTML='';
+  const pecas=pecasDaOS(o);
+  if(pecas.length)pecas.forEach(p=>adicionarPeca(p.descricao,p.valor?String(p.valor).replace('.',','):''));
+  else adicionarPeca();
+  el('osMaoObra').value=o.maoObra?String(o.maoObra).replace('.',','):'';
+  el('osStatus').value=o.status||'Em diagnóstico';
   atualizarTotalOS();
   showView('novaOS');
 }
@@ -1213,8 +1253,7 @@ function salvarOS(){
   if(!clienteId || !motoId){showToast('Selecione cliente e moto.');return}
   if(!servico){showToast('Informe o serviço ou diagnóstico.');return}
 
-  ordens.push({
-    id:Date.now(),
+  const dados={
     clienteId,
     motoId,
     checklist,
@@ -1226,14 +1265,32 @@ function salvarOS(){
     valorPecas,
     maoObra,
     total:valorPecas+maoObra,
-    status,
-    criadoEm:new Date().toISOString()
-  });
+    status
+  };
 
-  persistirOS();
-  renderDashboard();
-  showView('ordens');
-  showToast('Ordem de serviço salva.');
+  if(osEditandoId){
+    const ordem=ordens.find(o=>o.id===osEditandoId);
+    if(!ordem || ordem.finalizada){
+      showToast('Esta O.S. não pode mais ser editada.');
+      return;
+    }
+    Object.assign(ordem,dados,{atualizadoEm:new Date().toISOString()});
+    osSelecionadaId=ordem.id;
+    persistirOS();
+    renderDashboard();
+    renderDetalheOS();
+    showView('osDetalhe');
+    showToast('O.S. atualizada.');
+  }else{
+    const ordem={id:Date.now(),...dados,criadoEm:new Date().toISOString(),finalizada:false};
+    ordens.push(ordem);
+    osSelecionadaId=ordem.id;
+    persistirOS();
+    renderDashboard();
+    showView('ordens');
+    showToast('Ordem de serviço salva.');
+  }
+  osEditandoId=0;
 }
 
 function textoServicoOS(o){
@@ -1274,7 +1331,7 @@ function renderDetalheOS(){
   el('dadosOSDetalhe').innerHTML=`
     <div class="historyTop">
       <b>OS #${String(o.id).slice(-6)}</b>
-      <span class="statusBadge">${safe(o.status)}</span>
+      <span class="statusBadge">${safe(o.finalizada?'Finalizada':o.status)}</span>
     </div>
     <div class="osDetailSection">
       <h3>Cliente e moto</h3>
@@ -1298,8 +1355,27 @@ function renderDetalheOS(){
       <h3>Data</h3>
       <p>${new Date(o.criadoEm).toLocaleDateString('pt-BR')}</p>
     </div>
+    ${o.finalizada
+      ?'<div class="lockedOS">🔒 O.S. finalizada — edição bloqueada</div>'
+      :`<div class="osActions">
+          <button type="button" class="editOS" onclick="editarOS(${o.id})">Editar O.S.</button>
+          <button type="button" class="finishOS" onclick="finalizarOS(${o.id})">Finalizar O.S.</button>
+        </div>`}
     <button type="button" class="shareOS" onclick="enviarOSWhatsApp(${o.id})">Enviar O.S. pelo WhatsApp</button>
   `;
+}
+
+function finalizarOS(id){
+  const o=ordens.find(x=>x.id===Number(id));
+  if(!o || o.finalizada)return;
+  if(!confirm('Confirma que a moto foi entregue? Após finalizar, esta O.S. não poderá mais ser editada.'))return;
+  o.finalizada=true;
+  o.finalizadaEm=new Date().toISOString();
+  o.status='Entregue';
+  persistirOS();
+  renderDashboard();
+  renderDetalheOS();
+  showToast('O.S. finalizada e bloqueada.');
 }
 
 function enviarOSWhatsApp(id){
@@ -1366,7 +1442,7 @@ function renderOrdens(){
 }
 
 function renderDashboard(){
-  const abertas=ordens.filter(o=>!['Concluída','Entregue'].includes(o.status));
+  const abertas=ordens.filter(o=>!['Não aprovada','Concluída','Entregue'].includes(o.status) && !o.finalizada);
   const aguardando=ordens.filter(o=>o.status==='Aguardando aprovação');
   const concluidas=ordens.filter(o=>['Concluída','Entregue'].includes(o.status));
 
