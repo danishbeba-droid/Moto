@@ -372,6 +372,18 @@ main{padding:14px}
 .motoInfo div{padding:9px;border-radius:9px;background:#0c0e11}
 .motoInfo small{display:block;color:var(--muted);font-size:8px;margin-bottom:3px}
 .motoInfo b{font-size:10px}
+.motoListItem{width:100%;display:flex;align-items:center;gap:11px;padding:13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#17191e,#101216);color:#fff;text-align:left}
+.motoListIcon{width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:#0c0e11;font-size:20px}
+.motoListText{flex:1;min-width:0}
+.motoListText b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.motoListText small{display:block;margin-top:5px;color:var(--muted);font-size:10px}
+.motoListArrow{color:var(--red);font-size:28px}
+.motoDetailCard{padding:15px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#181b20,#101216)}
+.motoDetailHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.motoDetailHead h2{margin:0;font-size:21px}
+.motoDetailHead p{margin:5px 0 0;color:var(--muted);font-size:11px}
+.motoDetailHead>span{font-size:30px}
+.deleteMotoDetail{width:100%;margin-top:12px;padding:10px;border:1px solid #602429;border-radius:10px;background:#291013;color:#ff7c82;font-weight:800}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
 .modal.open{display:flex}
@@ -514,11 +526,20 @@ main{padding:14px}
     <button type="button" onclick="abrirMoto()">+ Nova moto</button>
   </div>
   <div id="motosClienteDetalhe" class="list"></div>
+</section>
+
+<section id="motoDetalhe" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="voltarParaCliente()">‹ Voltar</button>
+    <button type="button" class="primary" onclick="editarMotoDetalhe()">Editar moto</button>
+  </div>
+
+  <div id="dadosMotoDetalhe" class="motoDetailCard"></div>
 
   <div class="sectionTitle">
     <h2>Histórico de manutenção</h2>
   </div>
-  <div id="historicoClienteDetalhe" class="list"></div>
+  <div id="historicoMotoDetalhe" class="list"></div>
 </section>
 
 </main>
@@ -628,6 +649,7 @@ const KEY_MOTOS='SOS_MOTOS_REINICIO_MOTOS_V1';
 let clientes=carregarClientes();
 let motos=carregarMotos();
 let clienteSelecionadoId=0;
+let motoSelecionadaId=0;
 let toastTimer=null;
 
 function el(id){return document.getElementById(id)}
@@ -803,36 +825,70 @@ function renderDetalheCliente(){
 
   const motosCliente=motos.filter(m=>m.clienteId===cliente.id);
   el('motosClienteDetalhe').innerHTML=motosCliente.length?motosCliente.map(m=>`
-    <div class="motoCard">
-      <div class="motoTitle">
-        <div>
-          <h3>${safe([m.marca,m.modelo].filter(Boolean).join(' '))}</h3>
-          <p>${safe(m.placa||'Placa não informada')}</p>
-        </div>
-        <span>🏍️</span>
-      </div>
-      <div class="motoInfo">
-        <div><small>Marca</small><b>${safe(m.marca||'Não informada')}</b></div>
-        <div><small>Modelo</small><b>${safe(m.modelo||'Não informado')}</b></div>
-        <div><small>Ano</small><b>${safe(m.ano||'Não informado')}</b></div>
-        <div><small>KM</small><b>${Number(m.km||0).toLocaleString('pt-BR')}</b></div>
-        <div><small>Cor</small><b>${safe(m.cor||'Não informada')}</b></div>
-        <div><small>Placa</small><b>${safe(m.placa||'Não informada')}</b></div>
-      </div>
-      <div class="clientActions">
-        <button type="button" onclick="abrirMoto(${m.id})">Editar moto</button>
-        <button type="button" class="dangerBtn" onclick="excluirMoto(${m.id})">Excluir moto</button>
-      </div>
-    </div>
+    <button type="button" class="motoListItem" onclick="abrirDetalheMoto(${m.id})">
+      <span class="motoListIcon">🏍️</span>
+      <span class="motoListText">
+        <b>${safe([m.marca,m.modelo].filter(Boolean).join(' '))}</b>
+        <small>${safe(m.placa||'Placa não informada')}</small>
+      </span>
+      <span class="motoListArrow">›</span>
+    </button>
   `).join(''):'<div class="emptyList">Nenhuma moto cadastrada para este cliente.</div>';
+}
 
-  el('historicoClienteDetalhe').innerHTML=
-    '<div class="emptyList">Nenhuma manutenção registrada ainda.</div>';
+
+function abrirDetalheMoto(id){
+  const moto=motos.find(m=>m.id===Number(id));
+  if(!moto)return;
+  motoSelecionadaId=moto.id;
+  clienteSelecionadoId=moto.clienteId;
+  renderDetalheMoto();
+  showView('motoDetalhe');
+}
+
+function voltarParaCliente(){
+  renderDetalheCliente();
+  showView('clienteDetalhe');
+}
+
+function editarMotoDetalhe(){
+  if(motoSelecionadaId)abrirMoto(motoSelecionadaId);
+}
+
+function renderDetalheMoto(){
+  const moto=motos.find(m=>m.id===motoSelecionadaId);
+  if(!moto){
+    voltarParaCliente();
+    return;
+  }
+
+  el('dadosMotoDetalhe').innerHTML=`
+    <div class="motoDetailHead">
+      <div>
+        <h2>${safe([moto.marca,moto.modelo].filter(Boolean).join(' '))}</h2>
+        <p>${safe(moto.placa||'Placa não informada')}</p>
+      </div>
+      <span>🏍️</span>
+    </div>
+    <div class="motoInfo">
+      <div><small>Marca</small><b>${safe(moto.marca||'Não informada')}</b></div>
+      <div><small>Modelo</small><b>${safe(moto.modelo||'Não informado')}</b></div>
+      <div><small>Ano</small><b>${safe(moto.ano||'Não informado')}</b></div>
+      <div><small>KM</small><b>${Number(moto.km||0).toLocaleString('pt-BR')}</b></div>
+      <div><small>Cor</small><b>${safe(moto.cor||'Não informada')}</b></div>
+      <div><small>Placa</small><b>${safe(moto.placa||'Não informada')}</b></div>
+    </div>
+    <button type="button" class="deleteMotoDetail" onclick="excluirMoto(${moto.id})">Excluir moto</button>
+  `;
+
+  el('historicoMotoDetalhe').innerHTML=
+    '<div class="emptyList">Nenhuma manutenção registrada para esta moto.</div>';
 }
 
 function abrirMoto(id=0){
   if(!clienteSelecionadoId)return;
   const moto=motos.find(m=>m.id===Number(id));
+  if(!id)motoSelecionadaId=0;
   el('motoId').value=moto?.id||'';
   el('motoMarca').value=moto?.marca||'';
   el('motoModelo').value=moto?.modelo||'';
@@ -881,7 +937,11 @@ function salvarMoto(){
 
   persistirMotos();
   fecharMoto();
-  renderDetalheCliente();
+  if(id && motoSelecionadaId===id){
+    renderDetalheMoto();
+  }else{
+    renderDetalheCliente();
+  }
   showToast(id?'Moto atualizada.':'Moto cadastrada.');
 }
 
@@ -891,7 +951,9 @@ function excluirMoto(id){
   if(!confirm('Excluir esta moto?'))return;
   motos=motos.filter(m=>m.id!==id);
   persistirMotos();
+  motoSelecionadaId=0;
   renderDetalheCliente();
+  showView('clienteDetalhe');
   showToast('Moto excluída.');
 }
 
