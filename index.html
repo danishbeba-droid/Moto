@@ -362,7 +362,7 @@ main{padding:14px}
 .closeBtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:#191c21;color:#fff;font-size:22px}
 .field{margin-bottom:11px}
 .field label{display:block;margin-bottom:5px;color:#b5bac2;font-size:9px}
-.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff}
+.field input,.field select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff}
 .modalActions{display:flex;gap:8px;margin-top:13px}
 .modalActions button{flex:1}
 
@@ -487,6 +487,19 @@ main{padding:14px}
   <div id="listaClientes" class="list"></div>
 </section>
 
+<section id="motos" class="view">
+  <div class="pageHead">
+    <h2>Motos</h2>
+    <button type="button" class="primary" onclick="abrirMoto()">+ Nova</button>
+  </div>
+
+  <input id="buscaMoto" class="search" type="search"
+         placeholder="Buscar por modelo, placa ou cliente..."
+         oninput="renderMotos()">
+
+  <div id="listaMotos" class="list"></div>
+</section>
+
 </main>
 
   <button id="fabBtn" class="fab" aria-label="Nova OS">+</button>
@@ -538,12 +551,51 @@ main{padding:14px}
   </div>
 </div>
 
+<div id="modalMoto" class="modal" onclick="fecharModalMotoNoFundo(event)">
+  <div class="sheet">
+    <div class="modalHead">
+      <h2 id="tituloMoto">Nova moto</h2>
+      <button type="button" class="closeBtn" onclick="fecharMoto()">×</button>
+    </div>
+
+    <input id="motoId" type="hidden">
+
+    <div class="field">
+      <label>Cliente</label>
+      <select id="motoCliente"></select>
+    </div>
+
+    <div class="field">
+      <label>Modelo da moto</label>
+      <input id="motoModelo" type="text" placeholder="Ex.: Honda CG 160 Titan">
+    </div>
+
+    <div class="field">
+      <label>Placa</label>
+      <input id="motoPlaca" type="text" maxlength="8" placeholder="ABC1D23"
+             oninput="this.value=formatarPlaca(this.value)">
+    </div>
+
+    <div class="field">
+      <label>Quilometragem</label>
+      <input id="motoKm" type="number" inputmode="numeric" min="0" placeholder="Ex.: 15230">
+    </div>
+
+    <div class="modalActions">
+      <button type="button" class="secondary" onclick="fecharMoto()">Cancelar</button>
+      <button type="button" class="primary" onclick="salvarMoto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
 
 const KEY='SOS_MOTOS_REINICIO_CLIENTES_V2';
+const KEY_MOTOS='SOS_MOTOS_REINICIO_MOTOS_V1';
 let clientes=carregarClientes();
+let motos=carregarMotos();
 let toastTimer=null;
 
 function el(id){return document.getElementById(id)}
@@ -561,6 +613,19 @@ function persistir(){
   localStorage.setItem(KEY,JSON.stringify(clientes));
 }
 
+function carregarMotos(){
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY_MOTOS)||'[]');
+    return Array.isArray(d)?d:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function persistirMotos(){
+  localStorage.setItem(KEY_MOTOS,JSON.stringify(motos));
+}
+
 function showToast(text){
   clearTimeout(toastTimer);
   el('toast').textContent=text;
@@ -571,6 +636,7 @@ function showToast(text){
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   if(id==='clientes')renderClientes();
+  if(id==='motos')renderMotos();
   window.scrollTo(0,0);
 }
 
@@ -642,6 +708,10 @@ function editarCliente(id){abrirCliente(id)}
 function excluirCliente(id){
   const c=clientes.find(x=>x.id===id);
   if(!c)return;
+  if(motos.some(m=>m.clienteId===id)){
+    showToast('Exclua primeiro as motos deste cliente.');
+    return;
+  }
   if(!confirm('Excluir '+c.nome+'?'))return;
   clientes=clientes.filter(x=>x.id!==id);
   persistir();
@@ -675,12 +745,137 @@ function renderClientes(){
   `).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
 }
 
+
+function clienteDaMoto(id){
+  return clientes.find(c=>c.id===Number(id));
+}
+
+function formatarPlaca(valor){
+  return String(valor||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+}
+
+function abrirMoto(id=0){
+  if(!clientes.length){
+    showToast('Cadastre um cliente primeiro.');
+    showView('clientes');
+    return;
+  }
+
+  const m=motos.find(x=>x.id===Number(id));
+  el('motoId').value=m?.id||'';
+  el('motoCliente').innerHTML=clientes
+    .slice()
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
+    .join('');
+  el('motoCliente').value=m?.clienteId||clientes[0].id;
+  el('motoModelo').value=m?.modelo||'';
+  el('motoPlaca').value=m?.placa||'';
+  el('motoKm').value=m?.km??'';
+  el('tituloMoto').textContent=m?'Editar moto':'Nova moto';
+  el('modalMoto').classList.add('open');
+}
+
+function fecharMoto(){
+  el('modalMoto').classList.remove('open');
+}
+
+function fecharModalMotoNoFundo(event){
+  if(event.target.id==='modalMoto')fecharMoto();
+}
+
+function salvarMoto(){
+  const id=Number(el('motoId').value||0);
+  const clienteId=Number(el('motoCliente').value||0);
+  const modelo=el('motoModelo').value.trim();
+  const placa=formatarPlaca(el('motoPlaca').value);
+  const km=Number(el('motoKm').value||0);
+
+  if(!clienteId){
+    showToast('Selecione o cliente.');
+    return;
+  }
+  if(!modelo){
+    showToast('Informe o modelo da moto.');
+    return;
+  }
+  if(placa.length!==7){
+    showToast('Informe uma placa válida.');
+    return;
+  }
+
+  const placaDuplicada=motos.some(m=>m.placa===placa && m.id!==id);
+  if(placaDuplicada){
+    showToast('Esta placa já está cadastrada.');
+    return;
+  }
+
+  if(id){
+    const m=motos.find(x=>x.id===id);
+    if(m){m.clienteId=clienteId;m.modelo=modelo;m.placa=placa;m.km=km}
+  }else{
+    motos.push({id:Date.now(),clienteId,modelo,placa,km});
+  }
+
+  persistirMotos();
+  fecharMoto();
+  renderMotos();
+  showToast(id?'Moto atualizada.':'Moto cadastrada.');
+}
+
+function editarMoto(id){abrirMoto(id)}
+
+function excluirMoto(id){
+  const m=motos.find(x=>x.id===id);
+  if(!m)return;
+  if(!confirm('Excluir '+m.modelo+' - '+m.placa+'?'))return;
+  motos=motos.filter(x=>x.id!==id);
+  persistirMotos();
+  renderMotos();
+  showToast('Moto excluída.');
+}
+
+function renderMotos(){
+  const lista=el('listaMotos');
+  if(!lista)return;
+
+  const termo=(el('buscaMoto')?.value||'').trim().toLowerCase();
+  const arr=motos
+    .slice()
+    .sort((a,b)=>a.modelo.localeCompare(b.modelo,'pt-BR'))
+    .filter(m=>{
+      const cliente=clienteDaMoto(m.clienteId);
+      return `${m.modelo} ${m.placa} ${cliente?.nome||''}`.toLowerCase().includes(termo);
+    });
+
+  lista.innerHTML=arr.length?arr.map(m=>{
+    const cliente=clienteDaMoto(m.clienteId);
+    return `
+      <div class="clientCard">
+        <div class="clientMain">
+          <div class="clientAvatar">🏍️</div>
+          <div class="clientInfo">
+            <b>${safe(m.modelo)}</b>
+            <small>${safe(m.placa)} • ${Number(m.km||0).toLocaleString('pt-BR')} km</small>
+            <small>Cliente: ${safe(cliente?.nome||'Não encontrado')}</small>
+          </div>
+        </div>
+        <div class="clientActions">
+          <button type="button" onclick="editarMoto(${m.id})">Editar</button>
+          <button type="button" class="dangerBtn" onclick="excluirMoto(${m.id})">Excluir</button>
+        </div>
+      </div>
+    `;
+  }).join(''):'<div class="emptyList">Nenhuma moto cadastrada ainda.</div>';
+}
+
 /* Conecta SOMENTE os botões existentes da home. */
 document.querySelectorAll('[data-action]').forEach(btn=>{
   btn.onclick=()=>{
     const a=btn.dataset.action;
     if(a==='Início')showView('inicio');
     else if(a==='Clientes')showView('clientes');
+    else if(a==='Motos')showView('motos');
     else future(a);
   };
 });
@@ -692,6 +887,7 @@ el('verTodosBtn').onclick=()=>future('Ordens de Serviço');
 el('fabBtn').onclick=()=>future('Nova OS');
 
 renderClientes();
+renderMotos();
 
 </script>
 </body>
