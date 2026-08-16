@@ -656,6 +656,9 @@ main{padding:14px}
     <h2>Orçamentos</h2>
     <button type="button" class="primary" onclick="abrirNovoOrcamento()">+ Novo</button>
   </div>
+  <input id="buscaOrcamento" class="search" type="search"
+         inputmode="numeric" placeholder="Buscar pelo código do orçamento..."
+         oninput="renderOrcamentos()">
   <div id="listaOrcamentos" class="serviceList"></div>
 </section>
 
@@ -1651,7 +1654,11 @@ function salvarOrcamento(){
 function renderOrcamentos(){
   const lista=el('listaOrcamentos');
   if(!lista)return;
-  const arr=orcamentos.slice().sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm));
+  const termo=(el('buscaOrcamento')?.value||'').replace(/\D/g,'');
+  const arr=orcamentos
+    .slice()
+    .sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm))
+    .filter(o=>!termo || String(o.id).slice(-6).includes(termo));
   lista.innerHTML=arr.length?arr.map(o=>{
     const cliente=clientes.find(c=>c.id===o.clienteId);
     const moto=motos.find(m=>m.id===o.motoId);
@@ -1661,13 +1668,13 @@ function renderOrcamentos(){
           <b>Orçamento #${String(o.id).slice(-6)}</b>
           <span class="statusBadge">${safe(o.status)}</span>
         </div>
-        <h3>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</h3>
-        <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
-        <p>Válido até ${formatarDataOrcamento(o.validade)}</p>
-        <strong>${money(o.total)}</strong>
+        <div class="osDetailSection">
+          <h3>Cliente e moto</h3>
+          <p>${safe(cliente?.nome||'Cliente')}\n${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))} • ${safe(moto?.placa||'')}</p>
+        </div>
       </button>
     `;
-  }).join(''):'<div class="emptyList">Nenhum orçamento cadastrado.</div>';
+  }).join(''):'<div class="emptyList">'+(termo?'Nenhum orçamento encontrado com esse código.':'Nenhum orçamento cadastrado.')+'</div>';
 }
 
 function formatarDataOrcamento(data){
