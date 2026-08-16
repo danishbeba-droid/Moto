@@ -399,7 +399,24 @@ main{padding:14px}
 .historyTop{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .statusBadge{padding:5px 8px;border:1px solid #7a5b16;border-radius:999px;background:#2b2109;color:#ffc54a;font-size:8px;font-weight:800}
 .historyCard small{color:#9ba1aa;font-size:9px}
-@media(max-width:380px){.valueGrid{grid-template-columns:1fr}}
+.historyButton,.osButton{width:100%;color:#fff;text-align:left;cursor:pointer}
+.historyButton:hover,.osButton:hover{border-color:#454b55}
+.checkGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.checkItem{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#d9dde3;font-size:10px}
+.checkItem input{width:18px;height:18px;accent-color:var(--red)}
+.partsHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.partsHead label{color:#b5bac2;font-size:9px}
+.addPart{padding:7px 10px;border:1px solid #2f793e;border-radius:8px;background:#102b18;color:#70e68e;font-size:9px;font-weight:850}
+.partsList{display:grid;gap:7px;margin-bottom:11px}
+.partRow{display:grid;grid-template-columns:minmax(0,1fr) 105px 34px;gap:7px}
+.partRow input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff;font:inherit}
+.removePart{border:1px solid #602429;border-radius:9px;background:#291013;color:#ff7c82;font-weight:900}
+.osDetailSection{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#0c0e11}
+.osDetailSection h3{margin:0 0 8px;font-size:12px;color:#c5cad2}
+.osDetailSection p{margin:0;white-space:pre-wrap;color:#fff;font-size:11px;line-height:1.5}
+.detailLine{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#b9bec7;font-size:10px}
+.detailLine.total{padding-top:9px;border-top:1px solid var(--line);color:#fff;font-size:13px}
+@media(max-width:380px){.valueGrid{grid-template-columns:1fr}.checkGrid{grid-template-columns:1fr}.partRow{grid-template-columns:minmax(0,1fr) 95px 32px}}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
 .modal.open{display:flex}
@@ -570,29 +587,31 @@ main{padding:14px}
     </div>
 
     <div class="field">
-      <label>Problema relatado</label>
-      <textarea id="osProblema" rows="3" placeholder="Descreva o problema informado pelo cliente"></textarea>
+      <label>Checklist de entrada</label>
+      <div id="osChecklist" class="checkGrid">
+        <label class="checkItem"><input type="checkbox" value="Luzes"> Luzes</label>
+        <label class="checkItem"><input type="checkbox" value="Freios"> Freios</label>
+        <label class="checkItem"><input type="checkbox" value="Pneus"> Pneus</label>
+        <label class="checkItem"><input type="checkbox" value="Óleo"> Óleo</label>
+        <label class="checkItem"><input type="checkbox" value="Corrente"> Corrente</label>
+        <label class="checkItem"><input type="checkbox" value="Buzina e painel"> Buzina e painel</label>
+      </div>
     </div>
 
     <div class="field">
-      <label>Diagnóstico da oficina</label>
-      <textarea id="osDiagnostico" rows="3" placeholder="Diagnóstico inicial ou serviço necessário"></textarea>
+      <label>Serviço / diagnóstico</label>
+      <textarea id="osServico" rows="4" placeholder="Descreva o problema, diagnóstico e serviço necessário"></textarea>
     </div>
+
+    <div class="partsHead">
+      <label>Peças</label>
+      <button type="button" class="addPart" onclick="adicionarPeca()">+ Adicionar</button>
+    </div>
+    <div id="osPecasLista" class="partsList"></div>
 
     <div class="field">
-      <label>Peças e materiais</label>
-      <textarea id="osPecasDescricao" rows="2" placeholder="Ex.: óleo, filtro e vela"></textarea>
-    </div>
-
-    <div class="valueGrid">
-      <div class="field">
-        <label>Valor das peças</label>
-        <input id="osValorPecas" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()">
-      </div>
-      <div class="field">
-        <label>Mão de obra</label>
-        <input id="osMaoObra" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()">
-      </div>
+      <label>Mão de obra</label>
+      <input id="osMaoObra" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()">
     </div>
 
     <div class="field">
@@ -614,6 +633,14 @@ main{padding:14px}
 
     <button type="button" class="primary saveFull" onclick="salvarOS()">Salvar OS</button>
   </div>
+</section>
+
+<section id="osDetalhe" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="voltarDaOS()">‹ Voltar</button>
+    <h2 class="formTitle">Detalhes da OS</h2>
+  </div>
+  <div id="dadosOSDetalhe" class="motoDetailCard"></div>
 </section>
 
 <section id="ordens" class="view">
@@ -734,6 +761,8 @@ let motos=carregarMotos();
 let ordens=carregarOS();
 let clienteSelecionadoId=0;
 let motoSelecionadaId=0;
+let osSelecionadaId=0;
+let retornoOS='ordens';
 let toastTimer=null;
 
 function el(id){return document.getElementById(id)}
@@ -986,14 +1015,14 @@ function renderDetalheMoto(){
     .sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm));
 
   el('historicoMotoDetalhe').innerHTML=historico.length?historico.map(o=>`
-    <div class="historyCard">
+    <button type="button" class="historyCard historyButton" onclick="abrirDetalheOS(${o.id},'moto')">
       <div class="historyTop">
         <b>OS #${String(o.id).slice(-6)}</b>
         <span class="statusBadge">${safe(o.status)}</span>
       </div>
-      <p>${safe(o.problema)}</p>
-      <small>${new Date(o.criadoEm).toLocaleDateString('pt-BR')} • ${money(o.total)}</small>
-    </div>
+      <p>${safe(textoServicoOS(o))}</p>
+      <small>${new Date(o.criadoEm).toLocaleDateString('pt-BR')} • ${money(o.total)} • Toque para abrir ›</small>
+    </button>
   `).join(''):'<div class="emptyList">Nenhuma manutenção registrada para esta moto.</div>';
 }
 
@@ -1127,10 +1156,10 @@ function abrirNovaOS(){
     .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
     .join('');
 
-  el('osProblema').value='';
-  el('osDiagnostico').value='';
-  el('osPecasDescricao').value='';
-  el('osValorPecas').value='';
+  el('osServico').value='';
+  el('osChecklist').querySelectorAll('input').forEach(i=>i.checked=false);
+  el('osPecasLista').innerHTML='';
+  adicionarPeca();
   el('osMaoObra').value='';
   el('osStatus').value='Em diagnóstico';
   carregarMotosOS();
@@ -1146,8 +1175,33 @@ function carregarMotosOS(){
   `).join('');
 }
 
+function adicionarPeca(descricao='',valor=''){
+  const row=document.createElement('div');
+  row.className='partRow';
+  row.innerHTML=`
+    <input class="pecaDescricao" type="text" placeholder="Nome da peça" value="${safe(descricao)}">
+    <input class="pecaValor" type="text" inputmode="decimal" placeholder="R$ 0,00" value="${safe(valor)}" oninput="atualizarTotalOS()">
+    <button type="button" class="removePart" aria-label="Remover peça" onclick="removerPeca(this)">×</button>
+  `;
+  el('osPecasLista').appendChild(row);
+}
+
+function removerPeca(botao){
+  botao.closest('.partRow').remove();
+  if(!el('osPecasLista').children.length)adicionarPeca();
+  atualizarTotalOS();
+}
+
+function lerPecasOS(){
+  return [...el('osPecasLista').querySelectorAll('.partRow')].map(row=>({
+    descricao:row.querySelector('.pecaDescricao').value.trim(),
+    valor:parseMoney(row.querySelector('.pecaValor').value)
+  })).filter(p=>p.descricao||p.valor);
+}
+
 function atualizarTotalOS(){
-  const total=parseMoney(el('osValorPecas').value)+parseMoney(el('osMaoObra').value);
+  const valorPecas=lerPecasOS().reduce((soma,p)=>soma+p.valor,0);
+  const total=valorPecas+parseMoney(el('osMaoObra').value);
   el('osTotal').textContent=money(total);
   return total;
 }
@@ -1155,23 +1209,26 @@ function atualizarTotalOS(){
 function salvarOS(){
   const clienteId=Number(el('osCliente').value||0);
   const motoId=Number(el('osMoto').value||0);
-  const problema=el('osProblema').value.trim();
-  const diagnostico=el('osDiagnostico').value.trim();
-  const pecasDescricao=el('osPecasDescricao').value.trim();
-  const valorPecas=parseMoney(el('osValorPecas').value);
+  const servico=el('osServico').value.trim();
+  const checklist=[...el('osChecklist').querySelectorAll('input:checked')].map(i=>i.value);
+  const pecas=lerPecasOS();
+  const valorPecas=pecas.reduce((soma,p)=>soma+p.valor,0);
   const maoObra=parseMoney(el('osMaoObra').value);
   const status=el('osStatus').value;
 
   if(!clienteId || !motoId){showToast('Selecione cliente e moto.');return}
-  if(!problema){showToast('Informe o problema relatado.');return}
+  if(!servico){showToast('Informe o serviço ou diagnóstico.');return}
 
   ordens.push({
     id:Date.now(),
     clienteId,
     motoId,
-    problema,
-    diagnostico,
-    pecasDescricao,
+    checklist,
+    servico,
+    problema:servico,
+    diagnostico:'',
+    pecas,
+    pecasDescricao:pecas.map(p=>p.descricao).filter(Boolean).join(', '),
     valorPecas,
     maoObra,
     total:valorPecas+maoObra,
@@ -1185,6 +1242,71 @@ function salvarOS(){
   showToast('Ordem de serviço salva.');
 }
 
+function textoServicoOS(o){
+  return o.servico||[o.problema,o.diagnostico].filter(Boolean).join('\n')||'Não informado';
+}
+
+function pecasDaOS(o){
+  if(Array.isArray(o.pecas))return o.pecas;
+  if(o.pecasDescricao||o.valorPecas)return [{descricao:o.pecasDescricao||'Peças e materiais',valor:Number(o.valorPecas||0)}];
+  return [];
+}
+
+function abrirDetalheOS(id,retorno='ordens'){
+  const ordem=ordens.find(o=>o.id===Number(id));
+  if(!ordem)return;
+  osSelecionadaId=ordem.id;
+  retornoOS=retorno;
+  renderDetalheOS();
+  showView('osDetalhe');
+}
+
+function voltarDaOS(){
+  if(retornoOS==='moto'){
+    renderDetalheMoto();
+    showView('motoDetalhe');
+  }else{
+    showView('ordens');
+  }
+}
+
+function renderDetalheOS(){
+  const o=ordens.find(x=>x.id===osSelecionadaId);
+  if(!o)return;
+  const cliente=clientes.find(c=>c.id===o.clienteId);
+  const moto=motos.find(m=>m.id===o.motoId);
+  const pecas=pecasDaOS(o);
+  const checklist=Array.isArray(o.checklist)?o.checklist:[];
+  el('dadosOSDetalhe').innerHTML=`
+    <div class="historyTop">
+      <b>OS #${String(o.id).slice(-6)}</b>
+      <span class="statusBadge">${safe(o.status)}</span>
+    </div>
+    <div class="osDetailSection">
+      <h3>Cliente e moto</h3>
+      <p>${safe(cliente?.nome||'Cliente não encontrado')}\n${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))} • ${safe(moto?.placa||'')}</p>
+    </div>
+    <div class="osDetailSection">
+      <h3>Checklist</h3>
+      <p>${checklist.length?safe(checklist.join(' • ')):'Nenhum item marcado'}</p>
+    </div>
+    <div class="osDetailSection">
+      <h3>Serviço / diagnóstico</h3>
+      <p>${safe(textoServicoOS(o))}</p>
+    </div>
+    <div class="osDetailSection">
+      <h3>Peças</h3>
+      ${pecas.length?pecas.map(p=>`<div class="detailLine"><span>${safe(p.descricao||'Peça')}</span><b>${money(p.valor)}</b></div>`).join(''):'<p>Nenhuma peça adicionada.</p>'}
+      <div class="detailLine"><span>Mão de obra</span><b>${money(o.maoObra)}</b></div>
+      <div class="detailLine total"><strong>Total da OS</strong><strong>${money(o.total)}</strong></div>
+    </div>
+    <div class="osDetailSection">
+      <h3>Data</h3>
+      <p>${new Date(o.criadoEm).toLocaleDateString('pt-BR')}</p>
+    </div>
+  `;
+}
+
 function renderOrdens(){
   const lista=el('listaOrdens');
   if(!lista)return;
@@ -1194,16 +1316,16 @@ function renderOrdens(){
     const cliente=clientes.find(c=>c.id===o.clienteId);
     const moto=motos.find(m=>m.id===o.motoId);
     return `
-      <div class="osCard">
+      <button type="button" class="osCard osButton" onclick="abrirDetalheOS(${o.id},'ordens')">
         <div class="historyTop">
           <b>OS #${String(o.id).slice(-6)}</b>
           <span class="statusBadge">${safe(o.status)}</span>
         </div>
         <h3>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</h3>
         <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
-        <p>${safe(o.problema)}</p>
+        <p>${safe(textoServicoOS(o))}</p>
         <strong>${money(o.total)}</strong>
-      </div>
+      </button>
     `;
   }).join(''):'<div class="emptyList">Nenhuma ordem de serviço cadastrada.</div>';
 }
