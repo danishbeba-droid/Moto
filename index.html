@@ -354,6 +354,24 @@ main{padding:14px}
 .clientActions button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:#191c21;color:#fff;font-size:9px;font-weight:800}
 .clientActions .dangerBtn{color:#ff7c82;border-color:#602429;background:#291013}
 .clientActions .whatsBtn{color:#70e68e;border-color:#24713b;background:#102b18}
+.clientActions.two button{flex:1}
+.clickable{cursor:pointer;border-radius:11px;padding:3px}
+.clickable:hover{background:#1b1e24}
+.detailTop{display:flex;justify-content:space-between;gap:9px;margin-bottom:12px}
+.detailHero{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#181b20,#101216)}
+.detailHero h2{margin:0 0 5px;font-size:20px}
+.detailHero p{margin:0;color:var(--muted);font-size:11px}
+.clientAvatar.large{width:58px;height:58px;flex-basis:58px;font-size:18px}
+.whatsInline{margin-top:10px;padding:8px 11px;border:1px solid #24713b;border-radius:9px;background:#102b18;color:#70e68e;font-weight:800}
+.motoCard{border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,#17191e,#101216);padding:13px}
+.motoTitle{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.motoTitle h3{margin:0;font-size:15px}
+.motoTitle p{margin:4px 0 0;color:var(--muted);font-size:10px}
+.motoTitle>span{font-size:24px}
+.motoInfo{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.motoInfo div{padding:9px;border-radius:9px;background:#0c0e11}
+.motoInfo small{display:block;color:var(--muted);font-size:8px;margin-bottom:3px}
+.motoInfo b{font-size:10px}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
 .modal.open{display:flex}
@@ -483,6 +501,26 @@ main{padding:14px}
   <div id="listaClientes" class="list"></div>
 </section>
 
+<section id="clienteDetalhe" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="showView('clientes')">‹ Voltar</button>
+    <button type="button" class="primary" onclick="editarClienteDetalhe()">Editar cliente</button>
+  </div>
+
+  <div id="dadosClienteDetalhe" class="detailHero"></div>
+
+  <div class="sectionTitle rowTitle">
+    <h2>Motos do cliente</h2>
+    <button type="button" onclick="abrirMoto()">+ Nova moto</button>
+  </div>
+  <div id="motosClienteDetalhe" class="list"></div>
+
+  <div class="sectionTitle">
+    <h2>Histórico de manutenção</h2>
+  </div>
+  <div id="historicoClienteDetalhe" class="list"></div>
+</section>
+
 </main>
 
   <button id="fabBtn" class="fab" aria-label="Nova OS">+</button>
@@ -527,25 +565,56 @@ main{padding:14px}
       <input id="clienteTelefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000" oninput="this.value=formatarTelefone(this.value)">
     </div>
 
+    <div class="modalActions">
+      <button type="button" class="secondary" onclick="fecharCliente()">Cancelar</button>
+      <button type="button" class="primary" onclick="salvarCliente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalMoto" class="modal" onclick="fecharModalMotoNoFundo(event)">
+  <div class="sheet">
+    <div class="modalHead">
+      <h2 id="tituloMoto">Nova moto</h2>
+      <button type="button" class="closeBtn" onclick="fecharMoto()">×</button>
+    </div>
+
+    <input id="motoId" type="hidden">
+
     <div class="field">
-      <label>Modelo da moto</label>
-      <input id="clienteMoto" type="text" placeholder="Ex.: Honda CG 160 Titan">
+      <label>Marca</label>
+      <input id="motoMarca" type="text" placeholder="Ex.: Honda">
+    </div>
+
+    <div class="field">
+      <label>Modelo</label>
+      <input id="motoModelo" type="text" placeholder="Ex.: CG 160 Titan">
+    </div>
+
+    <div class="field">
+      <label>Ano</label>
+      <input id="motoAno" type="number" inputmode="numeric" min="1950" max="2100" placeholder="Ex.: 2024">
     </div>
 
     <div class="field">
       <label>Placa</label>
-      <input id="clientePlaca" type="text" maxlength="8" placeholder="ABC1D23"
+      <input id="motoPlaca" type="text" maxlength="8" placeholder="ABC1D23"
              oninput="this.value=formatarPlaca(this.value)">
     </div>
 
     <div class="field">
       <label>Quilometragem</label>
-      <input id="clienteKm" type="number" inputmode="numeric" min="0" placeholder="Ex.: 15230">
+      <input id="motoKm" type="number" inputmode="numeric" min="0" placeholder="Ex.: 15230">
+    </div>
+
+    <div class="field">
+      <label>Cor</label>
+      <input id="motoCor" type="text" placeholder="Ex.: Vermelha">
     </div>
 
     <div class="modalActions">
-      <button type="button" class="secondary" onclick="fecharCliente()">Cancelar</button>
-      <button type="button" class="primary" onclick="salvarCliente()">Salvar</button>
+      <button type="button" class="secondary" onclick="fecharMoto()">Cancelar</button>
+      <button type="button" class="primary" onclick="salvarMoto()">Salvar moto</button>
     </div>
   </div>
 </div>
@@ -558,6 +627,7 @@ const KEY='SOS_MOTOS_REINICIO_CLIENTES_V2';
 const KEY_MOTOS='SOS_MOTOS_REINICIO_MOTOS_V1';
 let clientes=carregarClientes();
 let motos=carregarMotos();
+let clienteSelecionadoId=0;
 let toastTimer=null;
 
 function el(id){return document.getElementById(id)}
@@ -622,12 +692,8 @@ function formatarTelefone(valor){
 function abrirCliente(id=0){
   const c=clientes.find(x=>x.id===Number(id));
   el('clienteId').value=c?.id||'';
-  const moto=c?motos.find(m=>m.clienteId===c.id):null;
   el('clienteNome').value=c?.nome||'';
   el('clienteTelefone').value=c?.telefone||c?.whatsapp||'';
-  el('clienteMoto').value=moto?.modelo||'';
-  el('clientePlaca').value=moto?.placa||'';
-  el('clienteKm').value=moto?.km??'';
   el('tituloCliente').textContent=c?'Editar cliente':'Novo cliente';
   el('modalCliente').classList.add('open');
 }
@@ -644,9 +710,6 @@ function salvarCliente(){
   const id=Number(el('clienteId').value||0);
   const nome=el('clienteNome').value.trim();
   const telefone=el('clienteTelefone').value.trim();
-  const modelo=el('clienteMoto').value.trim();
-  const placa=formatarPlaca(el('clientePlaca').value);
-  const km=Number(el('clienteKm').value||0);
 
   if(!nome){
     showToast('Informe o nome.');
@@ -654,20 +717,6 @@ function salvarCliente(){
   }
   if(!telefone || telefone.replace(/\D/g,'').length<10){
     showToast('Informe um telefone válido.');
-    return;
-  }
-  if(!modelo){
-    showToast('Informe o modelo da moto.');
-    return;
-  }
-  if(placa.length!==7){
-    showToast('Informe uma placa válida.');
-    return;
-  }
-
-  const placaDuplicada=motos.some(m=>m.placa===placa && m.clienteId!==id);
-  if(placaDuplicada){
-    showToast('Esta placa já está cadastrada.');
     return;
   }
 
@@ -680,19 +729,14 @@ function salvarCliente(){
     clientes.push({id:clienteId,nome,telefone});
   }
 
-  const moto=motos.find(m=>m.clienteId===clienteId);
-  if(moto){
-    moto.modelo=modelo;
-    moto.placa=placa;
-    moto.km=km;
-  }else{
-    motos.push({id:Date.now()+1,clienteId,modelo,placa,km});
-  }
-
   persistir();
-  persistirMotos();
   fecharCliente();
-  renderClientes();
+
+  if(clienteSelecionadoId===clienteId){
+    renderDetalheCliente();
+  }else{
+    renderClientes();
+  }
   showToast(id?'Cliente atualizado.':'Cliente cadastrado.');
 }
 
@@ -731,6 +775,126 @@ function abrirWhatsApp(id){
   window.open('https://wa.me/'+numero+'?text='+mensagem,'_blank','noopener');
 }
 
+function abrirDetalheCliente(id){
+  clienteSelecionadoId=Number(id);
+  renderDetalheCliente();
+  showView('clienteDetalhe');
+}
+
+function editarClienteDetalhe(){
+  if(clienteSelecionadoId)abrirCliente(clienteSelecionadoId);
+}
+
+function renderDetalheCliente(){
+  const cliente=clientes.find(c=>c.id===clienteSelecionadoId);
+  if(!cliente){
+    showView('clientes');
+    return;
+  }
+
+  el('dadosClienteDetalhe').innerHTML=`
+    <div class="clientAvatar large">${safe(iniciais(cliente.nome))}</div>
+    <div>
+      <h2>${safe(cliente.nome)}</h2>
+      <p>${safe(cliente.telefone||cliente.whatsapp||'Telefone não informado')}</p>
+      <button type="button" class="whatsInline" onclick="abrirWhatsApp(${cliente.id})">Abrir WhatsApp</button>
+    </div>
+  `;
+
+  const motosCliente=motos.filter(m=>m.clienteId===cliente.id);
+  el('motosClienteDetalhe').innerHTML=motosCliente.length?motosCliente.map(m=>`
+    <div class="motoCard">
+      <div class="motoTitle">
+        <div>
+          <h3>${safe([m.marca,m.modelo].filter(Boolean).join(' '))}</h3>
+          <p>${safe(m.placa||'Placa não informada')}</p>
+        </div>
+        <span>🏍️</span>
+      </div>
+      <div class="motoInfo">
+        <div><small>Marca</small><b>${safe(m.marca||'Não informada')}</b></div>
+        <div><small>Modelo</small><b>${safe(m.modelo||'Não informado')}</b></div>
+        <div><small>Ano</small><b>${safe(m.ano||'Não informado')}</b></div>
+        <div><small>KM</small><b>${Number(m.km||0).toLocaleString('pt-BR')}</b></div>
+        <div><small>Cor</small><b>${safe(m.cor||'Não informada')}</b></div>
+        <div><small>Placa</small><b>${safe(m.placa||'Não informada')}</b></div>
+      </div>
+      <div class="clientActions">
+        <button type="button" onclick="abrirMoto(${m.id})">Editar moto</button>
+        <button type="button" class="dangerBtn" onclick="excluirMoto(${m.id})">Excluir moto</button>
+      </div>
+    </div>
+  `).join(''):'<div class="emptyList">Nenhuma moto cadastrada para este cliente.</div>';
+
+  el('historicoClienteDetalhe').innerHTML=
+    '<div class="emptyList">Nenhuma manutenção registrada ainda.</div>';
+}
+
+function abrirMoto(id=0){
+  if(!clienteSelecionadoId)return;
+  const moto=motos.find(m=>m.id===Number(id));
+  el('motoId').value=moto?.id||'';
+  el('motoMarca').value=moto?.marca||'';
+  el('motoModelo').value=moto?.modelo||'';
+  el('motoAno').value=moto?.ano||'';
+  el('motoPlaca').value=moto?.placa||'';
+  el('motoKm').value=moto?.km??'';
+  el('motoCor').value=moto?.cor||'';
+  el('tituloMoto').textContent=moto?'Editar moto':'Nova moto';
+  el('modalMoto').classList.add('open');
+}
+
+function fecharMoto(){
+  el('modalMoto').classList.remove('open');
+}
+
+function fecharModalMotoNoFundo(event){
+  if(event.target.id==='modalMoto')fecharMoto();
+}
+
+function salvarMoto(){
+  const id=Number(el('motoId').value||0);
+  const marca=el('motoMarca').value.trim();
+  const modelo=el('motoModelo').value.trim();
+  const ano=Number(el('motoAno').value||0);
+  const placa=formatarPlaca(el('motoPlaca').value);
+  const km=Number(el('motoKm').value||0);
+  const cor=el('motoCor').value.trim();
+
+  if(!marca){showToast('Informe a marca.');return}
+  if(!modelo){showToast('Informe o modelo.');return}
+  if(!ano || ano<1950 || ano>2100){showToast('Informe um ano válido.');return}
+  if(placa.length!==7){showToast('Informe uma placa válida.');return}
+  if(!cor){showToast('Informe a cor.');return}
+
+  if(motos.some(m=>m.placa===placa && m.id!==id)){
+    showToast('Esta placa já está cadastrada.');
+    return;
+  }
+
+  if(id){
+    const moto=motos.find(m=>m.id===id);
+    if(moto){moto.marca=marca;moto.modelo=modelo;moto.ano=ano;moto.placa=placa;moto.km=km;moto.cor=cor}
+  }else{
+    motos.push({id:Date.now(),clienteId:clienteSelecionadoId,marca,modelo,ano,placa,km,cor});
+  }
+
+  persistirMotos();
+  fecharMoto();
+  renderDetalheCliente();
+  showToast(id?'Moto atualizada.':'Moto cadastrada.');
+}
+
+function excluirMoto(id){
+  const moto=motos.find(m=>m.id===id);
+  if(!moto)return;
+  if(!confirm('Excluir esta moto?'))return;
+  motos=motos.filter(m=>m.id!==id);
+  persistirMotos();
+  renderDetalheCliente();
+  showToast('Moto excluída.');
+}
+
 function renderClientes(){
   const lista=el('listaClientes');
   if(!lista)return;
@@ -739,32 +903,26 @@ function renderClientes(){
   const arr=clientes
     .slice()
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
-    .filter(cliente=>{
-      const moto=motos.find(m=>m.clienteId===cliente.id);
-      return `${cliente.nome} ${cliente.telefone||cliente.whatsapp||''} ${moto?.modelo||''} ${moto?.placa||''}`
-        .toLowerCase().includes(termo);
-    });
+    .filter(cliente=>
+      `${cliente.nome} ${cliente.telefone||cliente.whatsapp||''}`.toLowerCase().includes(termo)
+    );
 
-  lista.innerHTML=arr.length?arr.map(cliente=>{
-    const moto=motos.find(m=>m.clienteId===cliente.id);
-    return `
-      <div class="clientCard">
-        <div class="clientMain">
-          <div class="clientAvatar">${safe(iniciais(cliente.nome))}</div>
-          <div class="clientInfo">
-            <b>${safe(cliente.nome)}</b>
-            <small>${safe(cliente.telefone||cliente.whatsapp||'Telefone não informado')}</small>
-            <small>${moto?safe(moto.modelo)+' • '+safe(moto.placa)+' • '+Number(moto.km||0).toLocaleString('pt-BR')+' km':'Moto não cadastrada'}</small>
-          </div>
-        </div>
-        <div class="clientActions">
-          <button type="button" class="whatsBtn" onclick="abrirWhatsApp(${cliente.id})">WhatsApp</button>
-          <button type="button" onclick="editarCliente(${cliente.id})">Editar</button>
-          <button type="button" class="dangerBtn" onclick="excluirCliente(${cliente.id})">Excluir</button>
+  lista.innerHTML=arr.length?arr.map(cliente=>`
+    <div class="clientCard">
+      <div class="clientMain clickable" onclick="abrirDetalheCliente(${cliente.id})">
+        <div class="clientAvatar">${safe(iniciais(cliente.nome))}</div>
+        <div class="clientInfo">
+          <b>${safe(cliente.nome)}</b>
+          <small>${safe(cliente.telefone||cliente.whatsapp||'Telefone não informado')}</small>
+          <small>Toque para abrir a ficha completa ›</small>
         </div>
       </div>
-    `;
-  }).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
+      <div class="clientActions two">
+        <button type="button" class="whatsBtn" onclick="abrirWhatsApp(${cliente.id})">WhatsApp</button>
+        <button type="button" class="dangerBtn" onclick="excluirCliente(${cliente.id})">Excluir</button>
+      </div>
+    </div>
+  `).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
 }
 
 /* Conecta SOMENTE os botões existentes da home. */
