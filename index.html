@@ -353,6 +353,7 @@ main{padding:14px}
 .clientActions{display:flex;gap:7px;margin-top:9px}
 .clientActions button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:#191c21;color:#fff;font-size:9px;font-weight:800}
 .clientActions .dangerBtn{color:#ff7c82;border-color:#602429;background:#291013}
+.clientActions .whatsBtn{color:#70e68e;border-color:#24713b;background:#102b18}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
 .modal.open{display:flex}
@@ -433,11 +434,6 @@ main{padding:14px}
           <span>Clientes</span>
         </button>
 
-        <button data-action="Motos">
-          <b>🏍️</b>
-          <span>Motos</span>
-        </button>
-
         <button data-action="Nova OS">
           <b>🛠️</b>
           <span>Nova OS</span>
@@ -487,19 +483,6 @@ main{padding:14px}
   <div id="listaClientes" class="list"></div>
 </section>
 
-<section id="motos" class="view">
-  <div class="pageHead">
-    <h2>Motos</h2>
-    <button type="button" class="primary" onclick="abrirMoto()">+ Nova</button>
-  </div>
-
-  <input id="buscaMoto" class="search" type="search"
-         placeholder="Buscar por modelo, placa ou cliente..."
-         oninput="renderMotos()">
-
-  <div id="listaMotos" class="list"></div>
-</section>
-
 </main>
 
   <button id="fabBtn" class="fab" aria-label="Nova OS">+</button>
@@ -544,46 +527,25 @@ main{padding:14px}
       <input id="clienteTelefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000" oninput="this.value=formatarTelefone(this.value)">
     </div>
 
-    <div class="modalActions">
-      <button type="button" class="secondary" onclick="fecharCliente()">Cancelar</button>
-      <button type="button" class="primary" onclick="salvarCliente()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<div id="modalMoto" class="modal" onclick="fecharModalMotoNoFundo(event)">
-  <div class="sheet">
-    <div class="modalHead">
-      <h2 id="tituloMoto">Nova moto</h2>
-      <button type="button" class="closeBtn" onclick="fecharMoto()">×</button>
-    </div>
-
-    <input id="motoId" type="hidden">
-
-    <div class="field">
-      <label>Cliente</label>
-      <select id="motoCliente"></select>
-    </div>
-
     <div class="field">
       <label>Modelo da moto</label>
-      <input id="motoModelo" type="text" placeholder="Ex.: Honda CG 160 Titan">
+      <input id="clienteMoto" type="text" placeholder="Ex.: Honda CG 160 Titan">
     </div>
 
     <div class="field">
       <label>Placa</label>
-      <input id="motoPlaca" type="text" maxlength="8" placeholder="ABC1D23"
+      <input id="clientePlaca" type="text" maxlength="8" placeholder="ABC1D23"
              oninput="this.value=formatarPlaca(this.value)">
     </div>
 
     <div class="field">
       <label>Quilometragem</label>
-      <input id="motoKm" type="number" inputmode="numeric" min="0" placeholder="Ex.: 15230">
+      <input id="clienteKm" type="number" inputmode="numeric" min="0" placeholder="Ex.: 15230">
     </div>
 
     <div class="modalActions">
-      <button type="button" class="secondary" onclick="fecharMoto()">Cancelar</button>
-      <button type="button" class="primary" onclick="salvarMoto()">Salvar</button>
+      <button type="button" class="secondary" onclick="fecharCliente()">Cancelar</button>
+      <button type="button" class="primary" onclick="salvarCliente()">Salvar</button>
     </div>
   </div>
 </div>
@@ -636,7 +598,6 @@ function showToast(text){
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   if(id==='clientes')renderClientes();
-  if(id==='motos')renderMotos();
   window.scrollTo(0,0);
 }
 
@@ -661,8 +622,12 @@ function formatarTelefone(valor){
 function abrirCliente(id=0){
   const c=clientes.find(x=>x.id===Number(id));
   el('clienteId').value=c?.id||'';
+  const moto=c?motos.find(m=>m.clienteId===c.id):null;
   el('clienteNome').value=c?.nome||'';
   el('clienteTelefone').value=c?.telefone||c?.whatsapp||'';
+  el('clienteMoto').value=moto?.modelo||'';
+  el('clientePlaca').value=moto?.placa||'';
+  el('clienteKm').value=moto?.km??'';
   el('tituloCliente').textContent=c?'Editar cliente':'Novo cliente';
   el('modalCliente').classList.add('open');
 }
@@ -679,120 +644,16 @@ function salvarCliente(){
   const id=Number(el('clienteId').value||0);
   const nome=el('clienteNome').value.trim();
   const telefone=el('clienteTelefone').value.trim();
+  const modelo=el('clienteMoto').value.trim();
+  const placa=formatarPlaca(el('clientePlaca').value);
+  const km=Number(el('clienteKm').value||0);
 
   if(!nome){
     showToast('Informe o nome.');
     return;
   }
-
   if(!telefone || telefone.replace(/\D/g,'').length<10){
     showToast('Informe um telefone válido.');
-    return;
-  }
-
-  if(id){
-    const c=clientes.find(x=>x.id===id);
-    if(c){c.nome=nome;c.telefone=telefone;delete c.whatsapp}
-  }else{
-    clientes.push({id:Date.now(),nome,telefone});
-  }
-
-  persistir();
-  fecharCliente();
-  renderClientes();
-  showToast(id?'Cliente atualizado.':'Cliente cadastrado.');
-}
-
-function editarCliente(id){abrirCliente(id)}
-
-function excluirCliente(id){
-  const c=clientes.find(x=>x.id===id);
-  if(!c)return;
-  if(motos.some(m=>m.clienteId===id)){
-    showToast('Exclua primeiro as motos deste cliente.');
-    return;
-  }
-  if(!confirm('Excluir '+c.nome+'?'))return;
-  clientes=clientes.filter(x=>x.id!==id);
-  persistir();
-  renderClientes();
-}
-
-function renderClientes(){
-  const lista=el('listaClientes');
-  if(!lista)return;
-
-  const termo=(el('buscaCliente')?.value||'').trim().toLowerCase();
-  const arr=clientes
-    .slice()
-    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
-    .filter(c=>`${c.nome} ${c.telefone||c.whatsapp||''}`.toLowerCase().includes(termo));
-
-  lista.innerHTML=arr.length?arr.map(c=>`
-    <div class="clientCard">
-      <div class="clientMain">
-        <div class="clientAvatar">${safe(iniciais(c.nome))}</div>
-        <div class="clientInfo">
-          <b>${safe(c.nome)}</b>
-          <small>${safe(c.telefone||c.whatsapp||'Telefone não informado')}</small>
-        </div>
-      </div>
-      <div class="clientActions">
-        <button type="button" onclick="editarCliente(${c.id})">Editar</button>
-        <button type="button" class="dangerBtn" onclick="excluirCliente(${c.id})">Excluir</button>
-      </div>
-    </div>
-  `).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
-}
-
-
-function clienteDaMoto(id){
-  return clientes.find(c=>c.id===Number(id));
-}
-
-function formatarPlaca(valor){
-  return String(valor||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
-}
-
-function abrirMoto(id=0){
-  if(!clientes.length){
-    showToast('Cadastre um cliente primeiro.');
-    showView('clientes');
-    return;
-  }
-
-  const m=motos.find(x=>x.id===Number(id));
-  el('motoId').value=m?.id||'';
-  el('motoCliente').innerHTML=clientes
-    .slice()
-    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
-    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
-    .join('');
-  el('motoCliente').value=m?.clienteId||clientes[0].id;
-  el('motoModelo').value=m?.modelo||'';
-  el('motoPlaca').value=m?.placa||'';
-  el('motoKm').value=m?.km??'';
-  el('tituloMoto').textContent=m?'Editar moto':'Nova moto';
-  el('modalMoto').classList.add('open');
-}
-
-function fecharMoto(){
-  el('modalMoto').classList.remove('open');
-}
-
-function fecharModalMotoNoFundo(event){
-  if(event.target.id==='modalMoto')fecharMoto();
-}
-
-function salvarMoto(){
-  const id=Number(el('motoId').value||0);
-  const clienteId=Number(el('motoCliente').value||0);
-  const modelo=el('motoModelo').value.trim();
-  const placa=formatarPlaca(el('motoPlaca').value);
-  const km=Number(el('motoKm').value||0);
-
-  if(!clienteId){
-    showToast('Selecione o cliente.');
     return;
   }
   if(!modelo){
@@ -804,69 +665,106 @@ function salvarMoto(){
     return;
   }
 
-  const placaDuplicada=motos.some(m=>m.placa===placa && m.id!==id);
+  const placaDuplicada=motos.some(m=>m.placa===placa && m.clienteId!==id);
   if(placaDuplicada){
     showToast('Esta placa já está cadastrada.');
     return;
   }
 
+  let clienteId=id;
   if(id){
-    const m=motos.find(x=>x.id===id);
-    if(m){m.clienteId=clienteId;m.modelo=modelo;m.placa=placa;m.km=km}
+    const cliente=clientes.find(x=>x.id===id);
+    if(cliente){cliente.nome=nome;cliente.telefone=telefone;delete cliente.whatsapp}
   }else{
-    motos.push({id:Date.now(),clienteId,modelo,placa,km});
+    clienteId=Date.now();
+    clientes.push({id:clienteId,nome,telefone});
   }
 
+  const moto=motos.find(m=>m.clienteId===clienteId);
+  if(moto){
+    moto.modelo=modelo;
+    moto.placa=placa;
+    moto.km=km;
+  }else{
+    motos.push({id:Date.now()+1,clienteId,modelo,placa,km});
+  }
+
+  persistir();
   persistirMotos();
-  fecharMoto();
-  renderMotos();
-  showToast(id?'Moto atualizada.':'Moto cadastrada.');
+  fecharCliente();
+  renderClientes();
+  showToast(id?'Cliente atualizado.':'Cliente cadastrado.');
 }
 
-function editarMoto(id){abrirMoto(id)}
+function editarCliente(id){abrirCliente(id)}
 
-function excluirMoto(id){
-  const m=motos.find(x=>x.id===id);
-  if(!m)return;
-  if(!confirm('Excluir '+m.modelo+' - '+m.placa+'?'))return;
-  motos=motos.filter(x=>x.id!==id);
+function excluirCliente(id){
+  const cliente=clientes.find(x=>x.id===id);
+  if(!cliente)return;
+  if(!confirm('Excluir '+cliente.nome+' e a moto vinculada?'))return;
+  clientes=clientes.filter(x=>x.id!==id);
+  motos=motos.filter(m=>m.clienteId!==id);
+  persistir();
   persistirMotos();
-  renderMotos();
-  showToast('Moto excluída.');
+  renderClientes();
+  showToast('Cliente excluído.');
 }
 
-function renderMotos(){
-  const lista=el('listaMotos');
+function formatarPlaca(valor){
+  return String(valor||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
+}
+
+function numeroWhatsApp(telefone){
+  const n=String(telefone||'').replace(/\D/g,'');
+  return (n.length===10||n.length===11)?'55'+n:n;
+}
+
+function abrirWhatsApp(id){
+  const cliente=clientes.find(c=>c.id===id);
+  if(!cliente)return;
+  const numero=numeroWhatsApp(cliente.telefone||cliente.whatsapp);
+  if(numero.length<12){
+    showToast('Telefone inválido para WhatsApp.');
+    return;
+  }
+  const mensagem=encodeURIComponent('Olá, '+cliente.nome+'! Aqui é da S.O.S Motos.');
+  window.open('https://wa.me/'+numero+'?text='+mensagem,'_blank','noopener');
+}
+
+function renderClientes(){
+  const lista=el('listaClientes');
   if(!lista)return;
 
-  const termo=(el('buscaMoto')?.value||'').trim().toLowerCase();
-  const arr=motos
+  const termo=(el('buscaCliente')?.value||'').trim().toLowerCase();
+  const arr=clientes
     .slice()
-    .sort((a,b)=>a.modelo.localeCompare(b.modelo,'pt-BR'))
-    .filter(m=>{
-      const cliente=clienteDaMoto(m.clienteId);
-      return `${m.modelo} ${m.placa} ${cliente?.nome||''}`.toLowerCase().includes(termo);
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .filter(cliente=>{
+      const moto=motos.find(m=>m.clienteId===cliente.id);
+      return `${cliente.nome} ${cliente.telefone||cliente.whatsapp||''} ${moto?.modelo||''} ${moto?.placa||''}`
+        .toLowerCase().includes(termo);
     });
 
-  lista.innerHTML=arr.length?arr.map(m=>{
-    const cliente=clienteDaMoto(m.clienteId);
+  lista.innerHTML=arr.length?arr.map(cliente=>{
+    const moto=motos.find(m=>m.clienteId===cliente.id);
     return `
       <div class="clientCard">
         <div class="clientMain">
-          <div class="clientAvatar">🏍️</div>
+          <div class="clientAvatar">${safe(iniciais(cliente.nome))}</div>
           <div class="clientInfo">
-            <b>${safe(m.modelo)}</b>
-            <small>${safe(m.placa)} • ${Number(m.km||0).toLocaleString('pt-BR')} km</small>
-            <small>Cliente: ${safe(cliente?.nome||'Não encontrado')}</small>
+            <b>${safe(cliente.nome)}</b>
+            <small>${safe(cliente.telefone||cliente.whatsapp||'Telefone não informado')}</small>
+            <small>${moto?safe(moto.modelo)+' • '+safe(moto.placa)+' • '+Number(moto.km||0).toLocaleString('pt-BR')+' km':'Moto não cadastrada'}</small>
           </div>
         </div>
         <div class="clientActions">
-          <button type="button" onclick="editarMoto(${m.id})">Editar</button>
-          <button type="button" class="dangerBtn" onclick="excluirMoto(${m.id})">Excluir</button>
+          <button type="button" class="whatsBtn" onclick="abrirWhatsApp(${cliente.id})">WhatsApp</button>
+          <button type="button" onclick="editarCliente(${cliente.id})">Editar</button>
+          <button type="button" class="dangerBtn" onclick="excluirCliente(${cliente.id})">Excluir</button>
         </div>
       </div>
     `;
-  }).join(''):'<div class="emptyList">Nenhuma moto cadastrada ainda.</div>';
+  }).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
 }
 
 /* Conecta SOMENTE os botões existentes da home. */
@@ -875,7 +773,6 @@ document.querySelectorAll('[data-action]').forEach(btn=>{
     const a=btn.dataset.action;
     if(a==='Início')showView('inicio');
     else if(a==='Clientes')showView('clientes');
-    else if(a==='Motos')showView('motos');
     else future(a);
   };
 });
@@ -887,7 +784,6 @@ el('verTodosBtn').onclick=()=>future('Ordens de Serviço');
 el('fabBtn').onclick=()=>future('Nova OS');
 
 renderClientes();
-renderMotos();
 
 </script>
 </body>
