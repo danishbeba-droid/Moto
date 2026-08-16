@@ -384,6 +384,22 @@ main{padding:14px}
 .motoDetailHead p{margin:5px 0 0;color:var(--muted);font-size:11px}
 .motoDetailHead>span{font-size:30px}
 .deleteMotoDetail{width:100%;margin-top:12px;padding:10px;border:1px solid #602429;border-radius:10px;background:#291013;color:#ff7c82;font-weight:800}
+.formTitle{margin:7px 0;font-size:21px}
+.formCard{padding:15px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(145deg,#181b20,#101216)}
+.valueGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.totalOS{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px;padding:13px;border:1px solid #464b55;border-radius:11px;background:#0c0e11}
+.totalOS span{color:var(--muted);font-size:10px}
+.totalOS strong{color:var(--green);font-size:18px}
+.saveFull{width:100%;padding:13px}
+.serviceList{display:grid;gap:9px}
+.osCard,.historyCard{padding:13px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(145deg,#17191e,#101216)}
+.osCard h3{margin:9px 0 4px;font-size:14px}
+.osCard p,.historyCard p{margin:5px 0;color:var(--muted);font-size:10px}
+.osCard>strong{display:block;margin-top:8px;color:var(--green);font-size:14px}
+.historyTop{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.statusBadge{padding:5px 8px;border:1px solid #7a5b16;border-radius:999px;background:#2b2109;color:#ffc54a;font-size:8px;font-weight:800}
+.historyCard small{color:#9ba1aa;font-size:9px}
+@media(max-width:380px){.valueGrid{grid-template-columns:1fr}}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
 .modal.open{display:flex}
@@ -393,7 +409,7 @@ main{padding:14px}
 .closeBtn{width:38px;height:38px;border-radius:11px;border:1px solid var(--line);background:#191c21;color:#fff;font-size:22px}
 .field{margin-bottom:11px}
 .field label{display:block;margin-bottom:5px;color:#b5bac2;font-size:9px}
-.field input,.field select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff}
+.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff;font:inherit;resize:vertical}
 .modalActions{display:flex;gap:8px;margin-top:13px}
 .modalActions button{flex:1}
 
@@ -428,19 +444,19 @@ main{padding:14px}
       <div class="stats">
         <button class="stat red" data-action="Motos em serviço">
           <div class="statIcon">🏍️</div>
-          <strong>0</strong>
+          <strong id="dashEmServico">0</strong>
           <span>Motos em serviço</span>
         </button>
 
         <button class="stat yellow" data-action="Aguardando aprovação">
           <div class="statIcon">⏱️</div>
-          <strong>0</strong>
+          <strong id="dashAguardando">0</strong>
           <span>Aguardando aprovação</span>
         </button>
 
         <button class="stat green" data-action="Serviços concluídos">
           <div class="statIcon">✅</div>
-          <strong>0</strong>
+          <strong id="dashConcluidos">0</strong>
           <span>Serviços concluídos</span>
         </button>
       </div>
@@ -490,13 +506,7 @@ main{padding:14px}
         <button id="verTodosBtn">Ver todos ›</button>
       </div>
 
-      <div class="emptyCard">
-        <div class="emptyIcon">🔧</div>
-        <div>
-          <b>Nenhum serviço em andamento</b>
-          <small>As ordens de serviço aparecerão aqui.</small>
-        </div>
-      </div>
+      <div id="osRecentes" class="serviceList"></div>
 
     </section>
   
@@ -540,6 +550,78 @@ main{padding:14px}
     <h2>Histórico de manutenção</h2>
   </div>
   <div id="historicoMotoDetalhe" class="list"></div>
+</section>
+
+<section id="novaOS" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="showView('inicio')">‹ Cancelar</button>
+    <h2 class="formTitle">Nova OS</h2>
+  </div>
+
+  <div class="formCard">
+    <div class="field">
+      <label>Cliente</label>
+      <select id="osCliente" onchange="carregarMotosOS()"></select>
+    </div>
+
+    <div class="field">
+      <label>Moto</label>
+      <select id="osMoto"></select>
+    </div>
+
+    <div class="field">
+      <label>Problema relatado</label>
+      <textarea id="osProblema" rows="3" placeholder="Descreva o problema informado pelo cliente"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Diagnóstico da oficina</label>
+      <textarea id="osDiagnostico" rows="3" placeholder="Diagnóstico inicial ou serviço necessário"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Peças e materiais</label>
+      <textarea id="osPecasDescricao" rows="2" placeholder="Ex.: óleo, filtro e vela"></textarea>
+    </div>
+
+    <div class="valueGrid">
+      <div class="field">
+        <label>Valor das peças</label>
+        <input id="osValorPecas" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()">
+      </div>
+      <div class="field">
+        <label>Mão de obra</label>
+        <input id="osMaoObra" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOS()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Status</label>
+      <select id="osStatus">
+        <option>Em diagnóstico</option>
+        <option>Aguardando aprovação</option>
+        <option>Aprovada</option>
+        <option>Em serviço</option>
+        <option>Concluída</option>
+        <option>Entregue</option>
+      </select>
+    </div>
+
+    <div class="totalOS">
+      <span>Total da OS</span>
+      <strong id="osTotal">R$ 0,00</strong>
+    </div>
+
+    <button type="button" class="primary saveFull" onclick="salvarOS()">Salvar OS</button>
+  </div>
+</section>
+
+<section id="ordens" class="view">
+  <div class="pageHead">
+    <h2>Ordens de serviço</h2>
+    <button type="button" class="primary" onclick="abrirNovaOS()">+ Nova OS</button>
+  </div>
+  <div id="listaOrdens" class="serviceList"></div>
 </section>
 
 </main>
@@ -646,8 +728,10 @@ main{padding:14px}
 
 const KEY='SOS_MOTOS_REINICIO_CLIENTES_V2';
 const KEY_MOTOS='SOS_MOTOS_REINICIO_MOTOS_V1';
+const KEY_OS='SOS_MOTOS_ORDENS_V1';
 let clientes=carregarClientes();
 let motos=carregarMotos();
+let ordens=carregarOS();
 let clienteSelecionadoId=0;
 let motoSelecionadaId=0;
 let toastTimer=null;
@@ -680,6 +764,19 @@ function persistirMotos(){
   localStorage.setItem(KEY_MOTOS,JSON.stringify(motos));
 }
 
+function carregarOS(){
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY_OS)||'[]');
+    return Array.isArray(d)?d:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function persistirOS(){
+  localStorage.setItem(KEY_OS,JSON.stringify(ordens));
+}
+
 function showToast(text){
   clearTimeout(toastTimer);
   el('toast').textContent=text;
@@ -690,6 +787,8 @@ function showToast(text){
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   if(id==='clientes')renderClientes();
+  if(id==='ordens')renderOrdens();
+  if(id==='inicio')renderDashboard();
   window.scrollTo(0,0);
 }
 
@@ -881,8 +980,21 @@ function renderDetalheMoto(){
     <button type="button" class="deleteMotoDetail" onclick="excluirMoto(${moto.id})">Excluir moto</button>
   `;
 
-  el('historicoMotoDetalhe').innerHTML=
-    '<div class="emptyList">Nenhuma manutenção registrada para esta moto.</div>';
+  const historico=ordens
+    .filter(o=>o.motoId===moto.id)
+    .slice()
+    .sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm));
+
+  el('historicoMotoDetalhe').innerHTML=historico.length?historico.map(o=>`
+    <div class="historyCard">
+      <div class="historyTop">
+        <b>OS #${String(o.id).slice(-6)}</b>
+        <span class="statusBadge">${safe(o.status)}</span>
+      </div>
+      <p>${safe(o.problema)}</p>
+      <small>${new Date(o.criadoEm).toLocaleDateString('pt-BR')} • ${money(o.total)}</small>
+    </div>
+  `).join(''):'<div class="emptyList">Nenhuma manutenção registrada para esta moto.</div>';
 }
 
 function abrirMoto(id=0){
@@ -987,12 +1099,154 @@ function renderClientes(){
   `).join(''):'<div class="emptyList">Nenhum cliente cadastrado ainda.</div>';
 }
 
+
+function parseMoney(valor){
+  const s=String(valor||'').trim().replace(/\s/g,'');
+  if(s.includes(','))return Number(s.replace(/\./g,'').replace(',','.'))||0;
+  return Number(s)||0;
+}
+
+function money(valor){
+  return Number(valor||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+
+function abrirNovaOS(){
+  if(!clientes.length){
+    showToast('Cadastre um cliente primeiro.');
+    showView('clientes');
+    return;
+  }
+  if(!motos.length){
+    showToast('Cadastre uma moto primeiro.');
+    return;
+  }
+
+  el('osCliente').innerHTML=clientes
+    .filter(c=>motos.some(m=>m.clienteId===c.id))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
+    .join('');
+
+  el('osProblema').value='';
+  el('osDiagnostico').value='';
+  el('osPecasDescricao').value='';
+  el('osValorPecas').value='';
+  el('osMaoObra').value='';
+  el('osStatus').value='Em diagnóstico';
+  carregarMotosOS();
+  atualizarTotalOS();
+  showView('novaOS');
+}
+
+function carregarMotosOS(){
+  const clienteId=Number(el('osCliente').value||0);
+  const lista=motos.filter(m=>m.clienteId===clienteId);
+  el('osMoto').innerHTML=lista.map(m=>`
+    <option value="${m.id}">${safe([m.marca,m.modelo].filter(Boolean).join(' '))} — ${safe(m.placa)}</option>
+  `).join('');
+}
+
+function atualizarTotalOS(){
+  const total=parseMoney(el('osValorPecas').value)+parseMoney(el('osMaoObra').value);
+  el('osTotal').textContent=money(total);
+  return total;
+}
+
+function salvarOS(){
+  const clienteId=Number(el('osCliente').value||0);
+  const motoId=Number(el('osMoto').value||0);
+  const problema=el('osProblema').value.trim();
+  const diagnostico=el('osDiagnostico').value.trim();
+  const pecasDescricao=el('osPecasDescricao').value.trim();
+  const valorPecas=parseMoney(el('osValorPecas').value);
+  const maoObra=parseMoney(el('osMaoObra').value);
+  const status=el('osStatus').value;
+
+  if(!clienteId || !motoId){showToast('Selecione cliente e moto.');return}
+  if(!problema){showToast('Informe o problema relatado.');return}
+
+  ordens.push({
+    id:Date.now(),
+    clienteId,
+    motoId,
+    problema,
+    diagnostico,
+    pecasDescricao,
+    valorPecas,
+    maoObra,
+    total:valorPecas+maoObra,
+    status,
+    criadoEm:new Date().toISOString()
+  });
+
+  persistirOS();
+  renderDashboard();
+  showView('ordens');
+  showToast('Ordem de serviço salva.');
+}
+
+function renderOrdens(){
+  const lista=el('listaOrdens');
+  if(!lista)return;
+  const arr=ordens.slice().sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm));
+
+  lista.innerHTML=arr.length?arr.map(o=>{
+    const cliente=clientes.find(c=>c.id===o.clienteId);
+    const moto=motos.find(m=>m.id===o.motoId);
+    return `
+      <div class="osCard">
+        <div class="historyTop">
+          <b>OS #${String(o.id).slice(-6)}</b>
+          <span class="statusBadge">${safe(o.status)}</span>
+        </div>
+        <h3>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</h3>
+        <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
+        <p>${safe(o.problema)}</p>
+        <strong>${money(o.total)}</strong>
+      </div>
+    `;
+  }).join(''):'<div class="emptyList">Nenhuma ordem de serviço cadastrada.</div>';
+}
+
+function renderDashboard(){
+  const abertas=ordens.filter(o=>!['Concluída','Entregue'].includes(o.status));
+  const aguardando=ordens.filter(o=>o.status==='Aguardando aprovação');
+  const concluidas=ordens.filter(o=>['Concluída','Entregue'].includes(o.status));
+
+  el('dashEmServico').textContent=abertas.length;
+  el('dashAguardando').textContent=aguardando.length;
+  el('dashConcluidos').textContent=concluidas.length;
+  el('bellBtn').querySelector('i').textContent=aguardando.length;
+
+  const recentes=abertas.slice().sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm)).slice(0,3);
+  el('osRecentes').innerHTML=recentes.length?recentes.map(o=>{
+    const cliente=clientes.find(c=>c.id===o.clienteId);
+    const moto=motos.find(m=>m.id===o.motoId);
+    return `
+      <div class="osCard">
+        <div class="historyTop">
+          <b>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</b>
+          <span class="statusBadge">${safe(o.status)}</span>
+        </div>
+        <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
+        <strong>${money(o.total)}</strong>
+      </div>
+    `;
+  }).join(''):`
+    <div class="emptyCard">
+      <div class="emptyIcon">🔧</div>
+      <div><b>Nenhum serviço em andamento</b><small>As ordens de serviço aparecerão aqui.</small></div>
+    </div>
+  `;
+}
+
 /* Conecta SOMENTE os botões existentes da home. */
 document.querySelectorAll('[data-action]').forEach(btn=>{
   btn.onclick=()=>{
     const a=btn.dataset.action;
     if(a==='Início')showView('inicio');
     else if(a==='Clientes')showView('clientes');
+    else if(a==='Nova OS')abrirNovaOS();
     else future(a);
   };
 });
@@ -1000,10 +1254,11 @@ document.querySelectorAll('[data-action]').forEach(btn=>{
 el('menuBtn').onclick=()=>future('Menu');
 el('bellBtn').onclick=()=>future('Notificações');
 el('waHero').onclick=()=>future('WhatsApp');
-el('verTodosBtn').onclick=()=>future('Ordens de Serviço');
-el('fabBtn').onclick=()=>future('Nova OS');
+el('verTodosBtn').onclick=()=>showView('ordens');
+el('fabBtn').onclick=()=>abrirNovaOS();
 
 renderClientes();
+renderDashboard();
 
 </script>
 </body>
