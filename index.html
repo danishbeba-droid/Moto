@@ -479,7 +479,7 @@ main{padding:14px}
   </div>
 
   <input id="buscaCliente" class="search" type="search"
-         placeholder="Buscar por nome ou WhatsApp..."
+         placeholder="Buscar por nome ou telefone..."
          oninput="renderClientes()">
 
   <div id="listaClientes" class="list"></div>
@@ -525,8 +525,8 @@ main{padding:14px}
     </div>
 
     <div class="field">
-      <label>WhatsApp</label>
-      <input id="clienteWhats" type="tel" inputmode="tel" placeholder="(00) 00000-0000">
+      <label>Telefone</label>
+      <input id="clienteTelefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000" oninput="this.value=formatarTelefone(this.value)">
     </div>
 
     <div class="modalActions">
@@ -582,11 +582,19 @@ function safe(s){
   return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
 
+function formatarTelefone(valor){
+  const n=String(valor||'').replace(/\D/g,'').slice(0,11);
+  if(n.length<=2)return n;
+  if(n.length<=6)return '('+n.slice(0,2)+') '+n.slice(2);
+  if(n.length<=10)return '('+n.slice(0,2)+') '+n.slice(2,6)+'-'+n.slice(6);
+  return '('+n.slice(0,2)+') '+n.slice(2,7)+'-'+n.slice(7);
+}
+
 function abrirCliente(id=0){
   const c=clientes.find(x=>x.id===Number(id));
   el('clienteId').value=c?.id||'';
   el('clienteNome').value=c?.nome||'';
-  el('clienteWhats').value=c?.whatsapp||'';
+  el('clienteTelefone').value=c?.telefone||c?.whatsapp||'';
   el('tituloCliente').textContent=c?'Editar cliente':'Novo cliente';
   el('modalCliente').classList.add('open');
 }
@@ -602,18 +610,23 @@ function fecharModalNoFundo(event){
 function salvarCliente(){
   const id=Number(el('clienteId').value||0);
   const nome=el('clienteNome').value.trim();
-  const whatsapp=el('clienteWhats').value.trim();
+  const telefone=el('clienteTelefone').value.trim();
 
   if(!nome){
     showToast('Informe o nome.');
     return;
   }
 
+  if(!telefone || telefone.replace(/\D/g,'').length<10){
+    showToast('Informe um telefone válido.');
+    return;
+  }
+
   if(id){
     const c=clientes.find(x=>x.id===id);
-    if(c){c.nome=nome;c.whatsapp=whatsapp}
+    if(c){c.nome=nome;c.telefone=telefone;delete c.whatsapp}
   }else{
-    clientes.push({id:Date.now(),nome,whatsapp});
+    clientes.push({id:Date.now(),nome,telefone});
   }
 
   persistir();
@@ -641,7 +654,7 @@ function renderClientes(){
   const arr=clientes
     .slice()
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
-    .filter(c=>`${c.nome} ${c.whatsapp||''}`.toLowerCase().includes(termo));
+    .filter(c=>`${c.nome} ${c.telefone||c.whatsapp||''}`.toLowerCase().includes(termo));
 
   lista.innerHTML=arr.length?arr.map(c=>`
     <div class="clientCard">
@@ -649,7 +662,7 @@ function renderClientes(){
         <div class="clientAvatar">${safe(iniciais(c.nome))}</div>
         <div class="clientInfo">
           <b>${safe(c.nome)}</b>
-          <small>${safe(c.whatsapp||'WhatsApp não informado')}</small>
+          <small>${safe(c.telefone||c.whatsapp||'Telefone não informado')}</small>
         </div>
       </div>
       <div class="clientActions">
