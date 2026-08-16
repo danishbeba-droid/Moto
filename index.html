@@ -435,6 +435,8 @@ main{padding:14px}
 .field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0c0e11;color:#fff;font:inherit;resize:vertical}
 .modalActions{display:flex;gap:8px;margin-top:13px}
 .modalActions button{flex:1}
+.finishWarning{margin:0;color:#c9cdd4;font-size:11px;line-height:1.5}
+.finishWarning strong{display:block;margin-bottom:6px;color:#ffd26b;font-size:13px}
 
 </style>
 </head>
@@ -812,6 +814,23 @@ main{padding:14px}
   </div>
 </div>
 
+<div id="modalFinalizarOS" class="modal" onclick="fecharFinalizacaoNoFundo(event)">
+  <div class="sheet">
+    <div class="modalHead">
+      <h2>Finalizar O.S.</h2>
+      <button type="button" class="closeBtn" onclick="cancelarFinalizacao()">×</button>
+    </div>
+    <p class="finishWarning">
+      <strong>Confirma que a moto foi entregue?</strong>
+      Depois de finalizar, esta O.S. permanecerá no histórico e não poderá mais ser editada.
+    </p>
+    <div class="modalActions">
+      <button type="button" class="secondary" onclick="cancelarFinalizacao()">Cancelar</button>
+      <button type="button" class="finishOS" onclick="confirmarFinalizacao()">Sim, finalizar</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -828,6 +847,7 @@ let clienteSelecionadoId=0;
 let motoSelecionadaId=0;
 let osSelecionadaId=0;
 let osEditandoId=0;
+let osParaFinalizarId=0;
 let retornoOS='ordens';
 let orcamentoSelecionadoId=0;
 let orcamentoEditandoId=0;
@@ -1449,11 +1469,30 @@ function renderDetalheOS(){
 function finalizarOS(id){
   const o=ordens.find(x=>x.id===Number(id));
   if(!o || o.finalizada)return;
-  if(!confirm('Confirma que a moto foi entregue? Após finalizar, esta O.S. não poderá mais ser editada.'))return;
+  osParaFinalizarId=o.id;
+  el('modalFinalizarOS').classList.add('open');
+}
+
+function cancelarFinalizacao(){
+  osParaFinalizarId=0;
+  el('modalFinalizarOS').classList.remove('open');
+}
+
+function fecharFinalizacaoNoFundo(event){
+  if(event.target.id==='modalFinalizarOS')cancelarFinalizacao();
+}
+
+function confirmarFinalizacao(){
+  const o=ordens.find(x=>x.id===osParaFinalizarId);
+  if(!o || o.finalizada){
+    cancelarFinalizacao();
+    return;
+  }
   o.finalizada=true;
   o.finalizadaEm=new Date().toISOString();
   o.status='Entregue';
   persistirOS();
+  cancelarFinalizacao();
   renderDashboard();
   renderDetalheOS();
   showToast('O.S. finalizada e bloqueada.');
