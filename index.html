@@ -674,8 +674,8 @@ main{padding:14px}
       <select id="orcMoto"></select>
     </div>
     <div class="field">
-      <label>Serviço / diagnóstico</label>
-      <textarea id="orcDescricao" rows="4" placeholder="Descreva os serviços do orçamento"></textarea>
+      <label>Validade do orçamento</label>
+      <input id="orcValidade" type="date">
     </div>
     <div class="partsHead">
       <label>Peças</label>
@@ -1577,7 +1577,8 @@ function abrirNovoOrcamento(){
   carregarMotosOrcamento();
   el('orcFormTitle').textContent='Novo orçamento';
   el('salvarOrcBtn').textContent='Salvar orçamento';
-  el('orcDescricao').value='';
+  el('orcValidade').value='';
+  el('orcValidade').min=new Date().toISOString().slice(0,10);
   el('orcItensLista').innerHTML='';
   adicionarItemOrcamento();
   el('orcMaoObra').value='';
@@ -1620,14 +1621,14 @@ function atualizarTotalOrcamento(){
 function salvarOrcamento(){
   const clienteId=Number(el('orcCliente').value||0);
   const motoId=Number(el('orcMoto').value||0);
-  const descricao=el('orcDescricao').value.trim();
+  const validade=el('orcValidade').value;
   const itens=lerItensOrcamento();
   const valorPecas=itens.reduce((soma,i)=>soma+i.valor,0);
   const maoObra=parseMoney(el('orcMaoObra').value);
   const status=el('orcStatus').value;
   if(!clienteId||!motoId){showToast('Selecione cliente e moto.');return}
-  if(!descricao){showToast('Informe o serviço do orçamento.');return}
-  const dados={clienteId,motoId,descricao,itens,valorPecas,maoObra,total:valorPecas+maoObra,status};
+  if(!validade){showToast('Informe a validade do orçamento.');return}
+  const dados={clienteId,motoId,validade,itens,valorPecas,maoObra,total:valorPecas+maoObra,status};
   if(orcamentoEditandoId){
     const o=orcamentos.find(x=>x.id===orcamentoEditandoId);
     if(!o)return;
@@ -1662,11 +1663,18 @@ function renderOrcamentos(){
         </div>
         <h3>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</h3>
         <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
-        <p>${safe(o.descricao)}</p>
+        <p>Válido até ${formatarDataOrcamento(o.validade)}</p>
         <strong>${money(o.total)}</strong>
       </button>
     `;
   }).join(''):'<div class="emptyList">Nenhum orçamento cadastrado.</div>';
+}
+
+function formatarDataOrcamento(data){
+  if(!data)return 'não informada';
+  const partes=String(data).split('-');
+  if(partes.length!==3)return safe(data);
+  return partes[2]+'/'+partes[1]+'/'+partes[0];
 }
 
 function abrirDetalheOrcamento(id){
@@ -1689,7 +1697,7 @@ function renderDetalheOrcamento(){
       <span class="statusBadge">${safe(o.status)}</span>
     </div>
     <div class="osDetailSection"><h3>Cliente e moto</h3><p>${safe(cliente?.nome||'Cliente')}\n${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))} • ${safe(moto?.placa||'')}</p></div>
-    <div class="osDetailSection"><h3>Serviço / diagnóstico</h3><p>${safe(o.descricao)}</p></div>
+    <div class="osDetailSection"><h3>Validade do orçamento</h3><p>${formatarDataOrcamento(o.validade)}</p></div>
     <div class="osDetailSection">
       <h3>Peças</h3>
       ${itens.length?itens.map(i=>`<div class="detailLine"><span>${safe(i.descricao||'Peça')}</span><b>${money(i.valor)}</b></div>`).join(''):'<p>Nenhuma peça adicionada.</p>'}
@@ -1713,7 +1721,8 @@ function editarOrcamento(id){
   el('orcMoto').value=String(o.motoId);
   el('orcFormTitle').textContent='Editar orçamento #'+String(o.id).slice(-6);
   el('salvarOrcBtn').textContent='Salvar alterações';
-  el('orcDescricao').value=o.descricao||'';
+  el('orcValidade').value=o.validade||'';
+  el('orcValidade').min=new Date().toISOString().slice(0,10);
   el('orcItensLista').innerHTML='';
   const itens=Array.isArray(o.itens)?o.itens:[];
   if(itens.length)itens.forEach(i=>adicionarItemOrcamento(i.descricao,i.valor?String(i.valor).replace('.',','):''));
@@ -1740,9 +1749,7 @@ function enviarOrcamentoWhatsApp(id){
     '*Cliente:* '+(cliente?.nome||'Não informado'),
     '*Moto:* '+([moto?.marca,moto?.modelo].filter(Boolean).join(' ')||'Não informada'),
     '*Placa:* '+(moto?.placa||'Não informada'),
-    '',
-    '*Serviço / diagnóstico:*',
-    o.descricao,
+    '*Validade:* '+formatarDataOrcamento(o.validade),
     '',
     '*Peças:*',
     linhasItens,
