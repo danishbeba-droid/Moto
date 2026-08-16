@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090b">
+<link rel="manifest" href="manifest.json">
+<title>S.O.S Motos</title>
+<style>
+*{box-sizing:border-box}
+:root{
+ --bg:#07080a;--panel:#111317;--panel2:#181b20;--line:#2a2e35;
+ --text:#f5f7fa;--muted:#9298a3;--red:#ef2b31;--red2:#b90d12;
+ --green:#62d836;--yellow:#ffae00;--blue:#4b9cff;
+}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{min-height:100vh}.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:88px}
+header{position:sticky;top:0;z-index:20;padding:14px 16px 12px;background:linear-gradient(180deg,rgba(4,5,7,.98),rgba(10,11,14,.95));border-bottom:1px solid #20242a;backdrop-filter:blur(12px)}
+.brandRow{display:flex;align-items:center;justify-content:space-between;gap:12px}.brandLeft{display:flex;align-items:center;gap:12px}
+.logoMark{width:58px;height:58px;border-radius:17px;background:linear-gradient(145deg,#ff343a,#b6070d 75%);display:grid;place-items:center;font-weight:1000;font-style:italic;box-shadow:0 10px 28px rgba(239,43,49,.23), inset 0 0 0 1px rgba(255,255,255,.07)}
+.logoWords{line-height:.95}.logoWords .sos{font-weight:1000;font-size:27px;letter-spacing:.5px;font-style:italic}.logoWords .motos{font-weight:1000;font-size:17px;color:var(--red);letter-spacing:1.7px;font-style:italic}.logoWords small{display:block;margin-top:6px;font-size:8px;letter-spacing:2.2px;color:#a8adb6}
+.headerIcons{display:flex;gap:8px}.iconBtn{width:42px;height:42px;border-radius:13px;border:1px solid var(--line);background:#121419;color:white;font-size:18px}
+main{padding:17px}.view{display:none}.view.active{display:block}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#15181d 0%,#0d0f12 62%,#171014 100%);border:1px solid var(--line);border-radius:24px;padding:19px;margin-bottom:14px}
+.hero:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-72px;top:-70px;background:radial-gradient(circle,rgba(239,43,49,.3),rgba(239,43,49,0) 68%)}
+.hero h2{margin:0;font-size:25px}.hero h2 span{color:var(--red)}.hero p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{min-height:120px;background:linear-gradient(145deg,#191c21,#101216);border:1px solid var(--line);border-radius:19px;padding:15px;position:relative;overflow:hidden}
+.statIcon{width:38px;height:38px;border-radius:12px;background:#242831;display:grid;place-items:center;font-size:18px}
+.stat strong{display:block;font-size:28px;margin:11px 0 4px}.stat span{font-size:12px;color:var(--muted)}
+.stat.red strong{color:#ff4a50}.stat.yellow strong{color:var(--yellow)}.stat.green strong{color:var(--green)}.stat.blue strong{color:var(--blue)}
+.whatsapp{margin-top:12px;padding:13px 14px;border:1px solid rgba(239,43,49,.75);border-radius:17px;background:linear-gradient(90deg,#121417,#161216);display:flex;align-items:center;gap:10px}
+.waIcon{width:40px;height:40px;border-radius:50%;border:2px solid #49d16f;display:grid;place-items:center;font-size:18px}.whatsapp .copy{flex:1}.whatsapp b{display:block;font-size:13px}.whatsapp small{color:var(--muted);font-size:11px}
+.smallRed{border:0;background:var(--red);color:white;border-radius:11px;padding:10px 12px;font-weight:800}
+.sectionHead{display:flex;align-items:center;justify-content:space-between;margin:21px 2px 10px}.sectionHead h3{margin:0;font-size:17px}.sectionHead button{border:0;background:none;color:var(--red);font-weight:800}
+.quick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.quick button{min-height:92px;border:1px solid var(--line);background:linear-gradient(145deg,#171a1f,#111317);color:white;border-radius:16px;padding:11px 5px;font-size:10px;font-weight:700}.quick b{display:block;font-size:23px;margin-bottom:8px}
+.serviceList{display:grid;gap:9px}.service{display:grid;grid-template-columns:1fr auto;gap:10px;background:linear-gradient(120deg,#181b20,#101216);border:1px solid var(--line);border-radius:17px;padding:14px}.service h4{margin:0 0 5px;font-size:14px}.service p{margin:2px 0;color:var(--muted);font-size:12px}.service .money{color:#76e24e;font-weight:800}
+.badge{align-self:start;font-size:10px;padding:6px 9px;border-radius:999px;border:1px solid}.badge.yellow{color:#ffc542;border-color:#a57300;background:#2c220a}.badge.green{color:#7fea59;border-color:#3f8f29;background:#10240b}.badge.blue{color:#65a9ff;border-color:#2866b0;background:#0c1a2d}
+.pageTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.pageTitle h2{margin:0;font-size:23px}
+.primary{border:0;background:linear-gradient(145deg,var(--red),var(--red2));color:white;border-radius:12px;padding:11px 14px;font-weight:800}
+.search,input,select,textarea{width:100%;border:1px solid var(--line);background:#0e1013;color:#fff;border-radius:12px;padding:13px;font:inherit}.search{margin-bottom:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:14px;margin-bottom:9px}.cardRow{display:flex;align-items:center;gap:12px}.avatar{width:44px;height:44px;border-radius:50%;border:1px solid #555c67;display:grid;place-items:center;font-weight:900;color:#dfe3ea}.card h4{margin:0 0 4px}.card p{margin:2px 0;font-size:12px;color:var(--muted)}
+.stockRow{display:flex;justify-content:space-between;gap:12px}
+.modal{position:fixed;inset:0;background:#000c;display:none;align-items:flex-end;z-index:50}.modal.open{display:flex}.sheet{width:min(760px,100%);margin:auto;background:#15181d;border-radius:24px 24px 0 0;padding:20px;max-height:88vh;overflow:auto;border-top:1px solid #343841}.sheet h2{margin:0 0 15px}
+.field{margin:11px 0}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:6px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;gap:9px;margin-top:15px}.actions button{flex:1}.secondary{border:1px solid var(--line);background:#20242a;color:white;border-radius:12px;padding:12px}
+.fab{position:fixed;right:20px;bottom:84px;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(145deg,#ff343a,#ce1016);color:#fff;font-size:31px;box-shadow:0 12px 32px rgba(239,43,49,.28);z-index:25}
+nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,11,14,.97);border-top:1px solid var(--line);z-index:30;padding-bottom:env(safe-area-inset-bottom)}.navInner{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr)}.navBtn{border:0;background:none;color:#8f949e;padding:10px 2px 9px;font-size:10px;font-weight:700}.navBtn b{display:block;font-size:20px;margin-bottom:3px}.navBtn.active{color:var(--red)}
+.finHero{background:linear-gradient(145deg,#171a20,#101216);border:1px solid var(--line);border-radius:20px;padding:20px}.finHero small{color:var(--muted)}.finHero strong{display:block;font-size:32px;margin-top:7px}
+@media(max-width:520px){.quick{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brandRow">
+    <div class="brandLeft">
+      <div class="logoMark">SOS</div>
+      <div class="logoWords">
+        <div class="sos">S.O.S</div>
+        <div class="motos">MOTOS</div>
+        <small>OFICINA ESPECIALIZADA</small>
+      </div>
+    </div>
+    <div class="headerIcons">
+      <button class="iconBtn">☰</button>
+      <button class="iconBtn">🔔</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="inicio" class="view active">
+  <div class="hero">
+    <h2>Bom dia, <span>Daniel!</span></h2>
+    <p>Confira o resumo da sua oficina</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat red"><div class="statIcon">🏍️</div><strong id="mOS">0</strong><span>Motos em serviço</span></div>
+    <div class="stat yellow"><div class="statIcon">⏱️</div><strong id="mAprov">0</strong><span>Aguardando aprovação</span></div>
+    <div class="stat green"><div class="statIcon">✅</div><strong id="mConcl">0</strong><span>Serviços concluídos</span></div>
+    <div class="stat blue"><div class="statIcon">💰</div><strong id="mFat">R$ 0</strong><span>Faturamento</span></div>
+  </div>
+
+  <div class="whatsapp">
+    <div class="waIcon">☎</div>
+    <div class="copy"><b>Orçamentos e avisos no WhatsApp</b><small>Envie informações da OS de forma rápida</small></div>
+    <button class="smallRed">Enviar</button>
+  </div>
+
+  <div class="sectionHead"><h3>Acesso rápido</h3></div>
+  <div class="quick">
+    <button onclick="showView('clientes')"><b>👤</b>Clientes</button>
+    <button onclick="showView('motos')"><b>🏍️</b>Motos</button>
+    <button onclick="openOS()"><b>🔧</b>Nova OS</button>
+    <button onclick="showView('orcamentos')"><b>📄</b>Orçamentos</button>
+    <button onclick="showView('checklist')"><b>🛡️</b>Checklist</button>
+    <button onclick="showView('estoque')"><b>📦</b>Estoque</button>
+    <button onclick="showView('financeiro')"><b>💰</b>Financeiro</button>
+    <button onclick="showView('historico')"><b>🕘</b>Histórico</button>
+    <button><b>💬</b>WhatsApp</button>
+  </div>
+
+  <div class="sectionHead"><h3>Serviços em andamento</h3><button onclick="showView('os')">Ver todos ›</button></div>
+  <div id="recentes" class="serviceList"></div>
+</section>
+
+<section id="clientes" class="view">
+  <div class="pageTitle"><h2>Clientes</h2><button class="primary" onclick="openCliente()">+ Novo</button></div>
+  <input class="search" placeholder="Buscar cliente..." oninput="buscarCliente(this.value)">
+  <div id="listaClientes"></div>
+</section>
+
+<section id="motos" class="view">
+  <div class="pageTitle"><h2>Motos</h2></div>
+  <div id="listaMotos"></div>
+</section>
+
+<section id="os" class="view">
+  <div class="pageTitle"><h2>Ordens de serviço</h2><button class="primary" onclick="openOS()">+ Nova OS</button></div>
+  <div id="listaOS"></div>
+</section>
+
+<section id="orcamentos" class="view">
+  <div class="pageTitle"><h2>Orçamentos</h2></div>
+  <div id="listaOrcamentos"></div>
+</section>
+
+<section id="checklist" class="view">
+  <div class="pageTitle"><h2>Checklist de entrada</h2></div>
+  <div class="card">
+    <h4>Inspeção visual</h4>
+    <p>Frente • Traseira • Lado esquerdo • Lado direito</p>
+    <p>Na próxima versão vamos adicionar fotos e marcação de avarias diretamente na imagem da moto.</p>
+  </div>
+</section>
+
+<section id="estoque" class="view">
+  <div class="pageTitle"><h2>Estoque</h2><button class="primary" onclick="openPeca()">+ Peça</button></div>
+  <div id="listaEstoque"></div>
+</section>
+
+<section id="financeiro" class="view">
+  <div class="pageTitle"><h2>Financeiro</h2></div>
+  <div class="finHero"><small>Faturamento total</small><strong id="fatTotal">R$ 0,00</strong></div>
+  <div class="stats" style="margin-top:10px">
+    <div class="stat green"><strong id="finConcluidos">0</strong><span>Serviços entregues</span></div>
+    <div class="stat yellow"><strong id="finAberto">R$ 0</strong><span>Valores em aberto</span></div>
+  </div>
+</section>
+
+<section id="historico" class="view">
+  <div class="pageTitle"><h2>Histórico</h2></div>
+  <div id="listaHistorico"></div>
+</section>
+</main>
+
+<button class="fab" onclick="openOS()">+</button>
+
+<nav><div class="navInner">
+  <button class="navBtn active" data-view="inicio"><b>⌂</b>Início</button>
+  <button class="navBtn" data-view="clientes"><b>👤</b>Clientes</button>
+  <button class="navBtn" data-view="os"><b>🔧</b>OS</button>
+  <button class="navBtn" data-view="estoque"><b>📦</b>Estoque</button>
+  <button class="navBtn" data-view="financeiro"><b>☰</b>Mais</button>
+</div></nav>
+</div>
+
+<div id="modalCliente" class="modal"><div class="sheet">
+  <h2>Novo cliente</h2>
+  <div class="field"><label>Nome</label><input id="cNome" placeholder="Nome completo"></div>
+  <div class="field"><label>Telefone / WhatsApp</label><input id="cTel" placeholder="(00) 00000-0000"></div>
+  <div class="row">
+    <div class="field"><label>Moto</label><input id="cMoto" placeholder="CG 160 Titan"></div>
+    <div class="field"><label>Placa</label><input id="cPlaca" placeholder="ABC1D23"></div>
+  </div>
+  <div class="field"><label>Quilometragem</label><input id="cKm" placeholder="15230"></div>
+  <div class="actions"><button class="secondary" onclick="closeModal('modalCliente')">Cancelar</button><button class="primary" onclick="salvarCliente()">Salvar</button></div>
+</div></div>
+
+<div id="modalOS" class="modal"><div class="sheet">
+  <h2>Nova ordem de serviço</h2>
+  <div class="field"><label>Cliente / Moto</label><select id="osCliente"></select></div>
+  <div class="field"><label>Problema relatado</label><textarea id="osServico" rows="3" placeholder="Ex.: barulho no motor ao acelerar..."></textarea></div>
+  <div class="field"><label>Diagnóstico inicial</label><textarea id="osDiagnostico" rows="3" placeholder="Diagnóstico da oficina..."></textarea></div>
+  <div class="row">
+    <div class="field"><label>Valor</label><input id="osValor" inputmode="decimal" placeholder="0,00"></div>
+    <div class="field"><label>Status</label><select id="osStatus"><option>Em diagnóstico</option><option>Aguardando aprovação</option><option>Em serviço</option><option>Pronta</option><option>Entregue</option></select></div>
+  </div>
+  <div class="actions"><button class="secondary" onclick="closeModal('modalOS')">Cancelar</button><button class="primary" onclick="salvarOS()">Salvar OS</button></div>
+</div></div>
+
+<div id="modalPeca" class="modal"><div class="sheet">
+  <h2>Adicionar peça</h2>
+  <div class="field"><label>Nome da peça</label><input id="pNome" placeholder="Filtro de óleo"></div>
+  <div class="row">
+    <div class="field"><label>Quantidade</label><input id="pQtd" type="number" value="1"></div>
+    <div class="field"><label>Estoque mínimo</label><input id="pMin" type="number" value="2"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>Custo</label><input id="pCusto" placeholder="0,00"></div>
+    <div class="field"><label>Venda</label><input id="pPreco" placeholder="0,00"></div>
+  </div>
+  <div class="actions"><button class="secondary" onclick="closeModal('modalPeca')">Cancelar</button><button class="primary" onclick="salvarPeca()">Salvar</button></div>
+</div></div>
+
+<script>
+const KEY='SOS_MOTOS_PRO_UI_V3';
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{
+ clientes:[
+  {id:1,nome:'João Silva',tel:'(21) 99876-5432',moto:'Honda CG 160 Titan',placa:'ABC1D23',km:'15.230'},
+  {id:2,nome:'Maria Oliveira',tel:'(21) 98765-4321',moto:'Yamaha Fazer 250',placa:'DEF2E45',km:'28.500'}
+ ],
+ os:[
+  {id:1,clienteId:1,servico:'Revisão geral + troca de óleo',diagnostico:'Revisão preventiva',valor:530,status:'Aguardando aprovação',data:'12/08/2026'},
+  {id:2,clienteId:2,servico:'Troca de pastilhas de freio',diagnostico:'Pastilhas desgastadas',valor:220,status:'Em serviço',data:'12/08/2026'}
+ ],
+ estoque:[
+  {id:1,nome:'Óleo 10W30',qtd:8,min:3,custo:30,preco:45},
+  {id:2,nome:'Filtro de óleo',qtd:3,min:2,custo:15,preco:25},
+  {id:3,nome:'Pastilha de freio',qtd:2,min:3,custo:45,preco:75}
+ ]
+};
+
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function cliente(id){return db.clientes.find(c=>c.id==id)}
+function initials(n){return (n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+function badge(s){let c='blue';if(s==='Aguardando aprovação')c='yellow';if(s==='Pronta'||s==='Entregue')c='green';return `<span class="badge ${c}">${s}</span>`}
+function parseBR(v){return Number(String(v||'').replace(/\./g,'').replace(',','.'))||0}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+
+function render(){
+ let abertas=db.os.filter(o=>o.status!=='Entregue');
+ let aprov=db.os.filter(o=>o.status==='Aguardando aprovação');
+ let concl=db.os.filter(o=>o.status==='Entregue');
+ let fat=concl.reduce((a,b)=>a+Number(b.valor||0),0);
+ let aberto=abertas.reduce((a,b)=>a+Number(b.valor||0),0);
+
+ mOS.textContent=abertas.length;mAprov.textContent=aprov.length;mConcl.textContent=concl.length;mFat.textContent=money(fat);
+ fatTotal.textContent=money(fat);finConcluidos.textContent=concl.length;finAberto.textContent=money(aberto);
+
+ let oh=db.os.slice().reverse().map(o=>{let c=cliente(o.clienteId)||{};return `<div class="service"><div><h4>${c.moto||'Moto'}</h4><p>${c.placa||''} • ${c.nome||'Cliente'}</p><p>${o.servico}</p><p class="money">${money(o.valor)}</p></div>${badge(o.status)}</div>`}).join('');
+ recentes.innerHTML=oh||'<div class="card"><p>Nenhuma OS cadastrada.</p></div>';
+ listaOS.innerHTML=oh||'<div class="card"><p>Nenhuma OS cadastrada.</p></div>';
+ listaOrcamentos.innerHTML=db.os.map(o=>{let c=cliente(o.clienteId)||{};return `<div class="card"><h4>${c.nome||'Cliente'} • ${c.moto||''}</h4><p>${o.servico}</p><p><b>${money(o.valor)}</b> • ${o.status}</p></div>`}).join('');
+
+ listaClientes.innerHTML=db.clientes.map(c=>`<div class="card"><div class="cardRow"><div class="avatar">${initials(c.nome)}</div><div><h4>${c.nome}</h4><p>${c.tel}</p><p>${c.moto} • ${c.placa} • ${c.km||'0'} km</p></div></div></div>`).join('');
+ listaMotos.innerHTML=db.clientes.map(c=>`<div class="card"><h4>${c.moto}</h4><p>${c.placa} • ${c.km||'0'} km</p><p>Cliente: ${c.nome}</p></div>`).join('');
+ listaHistorico.innerHTML=db.os.slice().reverse().map(o=>{let c=cliente(o.clienteId)||{};return `<div class="card"><h4>${o.data} • ${c.nome||''}</h4><p>${c.moto||''} • ${o.servico}</p><p>${money(o.valor)} • ${o.status}</p></div>`}).join('');
+
+ listaEstoque.innerHTML=db.estoque.map(p=>`<div class="card"><div class="stockRow"><div><h4>${p.nome}</h4><p>${p.qtd} un. • Venda ${money(p.preco)}</p></div><div>${p.qtd<=p.min?'<span class="badge yellow">Estoque baixo</span>':'<span class="badge green">Disponível</span>'}</div></div></div>`).join('');
+ osCliente.innerHTML=db.clientes.map(c=>`<option value="${c.id}">${c.nome} — ${c.moto}</option>`).join('');
+}
+
+function showView(id){
+ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.navBtn').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+ window.scrollTo(0,0)
+}
+document.querySelectorAll('.navBtn').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+function openCliente(){modalCliente.classList.add('open')}
+function openOS(){render();modalOS.classList.add('open')}
+function openPeca(){modalPeca.classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function salvarCliente(){
+ if(!cNome.value.trim())return alert('Digite o nome do cliente.');
+ db.clientes.push({id:Date.now(),nome:cNome.value.trim(),tel:cTel.value.trim(),moto:cMoto.value.trim(),placa:cPlaca.value.trim().toUpperCase(),km:cKm.value.trim()});
+ cNome.value=cTel.value=cMoto.value=cPlaca.value=cKm.value='';closeModal('modalCliente');save()
+}
+function salvarOS(){
+ if(!osCliente.value)return alert('Cadastre um cliente primeiro.');
+ if(!osServico.value.trim())return alert('Descreva o serviço.');
+ db.os.push({id:Date.now(),clienteId:Number(osCliente.value),servico:osServico.value.trim(),diagnostico:osDiagnostico.value.trim(),valor:parseBR(osValor.value),status:osStatus.value,data:new Date().toLocaleDateString('pt-BR')});
+ osServico.value=osDiagnostico.value=osValor.value='';closeModal('modalOS');save()
+}
+function salvarPeca(){
+ if(!pNome.value.trim())return alert('Digite o nome da peça.');
+ db.estoque.push({id:Date.now(),nome:pNome.value.trim(),qtd:Number(pQtd.value)||0,min:Number(pMin.value)||0,custo:parseBR(pCusto.value),preco:parseBR(pPreco.value)});
+ pNome.value='';pQtd.value=1;pMin.value=2;pCusto.value=pPreco.value='';closeModal('modalPeca');save()
+}
+function buscarCliente(q){
+ q=(q||'').toLowerCase();
+ listaClientes.querySelectorAll('.card').forEach((el,i)=>{let c=db.clientes[i];el.style.display=(c.nome+' '+c.tel+' '+c.moto+' '+c.placa).toLowerCase().includes(q)?'block':'none'})
+}
+render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
