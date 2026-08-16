@@ -5,11 +5,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.view.WindowInsets;
 
 public class MainActivity extends Activity {
     private static final String APP_URL = "https://danishbeba-droid.github.io/Moto/";
@@ -21,19 +21,14 @@ public class MainActivity extends Activity {
 
         getWindow().setStatusBarColor(Color.BLACK);
         getWindow().setNavigationBarColor(Color.BLACK);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(true);
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(0);
+        }
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(7, 8, 10));
-        webView.setClipToPadding(true);
-        webView.setOnApplyWindowInsetsListener((view, insets) -> {
-            view.setPadding(
-                0,
-                insets.getSystemWindowInsetTop(),
-                0,
-                insets.getSystemWindowInsetBottom()
-            );
-            return insets;
-        });
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
