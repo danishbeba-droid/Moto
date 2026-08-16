@@ -416,6 +416,7 @@ main{padding:14px}
 .osDetailSection p{margin:0;white-space:pre-wrap;color:#fff;font-size:11px;line-height:1.5}
 .detailLine{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#b9bec7;font-size:10px}
 .detailLine.total{padding-top:9px;border-top:1px solid var(--line);color:#fff;font-size:13px}
+.shareOS{width:100%;margin-top:12px;padding:12px;border:1px solid #24713b;border-radius:10px;background:#102b18;color:#70e68e;font-weight:900}
 @media(max-width:380px){.valueGrid{grid-template-columns:1fr}.checkGrid{grid-template-columns:1fr}.partRow{grid-template-columns:minmax(0,1fr) 95px 32px}}
 .emptyList{border:1px solid var(--line);border-radius:14px;background:#121419;padding:16px;text-align:center;color:var(--muted);font-size:10px}
 .modal{display:none;position:fixed;inset:0;z-index:80;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.72)}
@@ -1297,7 +1298,48 @@ function renderDetalheOS(){
       <h3>Data</h3>
       <p>${new Date(o.criadoEm).toLocaleDateString('pt-BR')}</p>
     </div>
+    <button type="button" class="shareOS" onclick="enviarOSWhatsApp(${o.id})">Enviar O.S. pelo WhatsApp</button>
   `;
+}
+
+function enviarOSWhatsApp(id){
+  const o=ordens.find(x=>x.id===Number(id));
+  if(!o)return;
+  const cliente=clientes.find(c=>c.id===o.clienteId);
+  const moto=motos.find(m=>m.id===o.motoId);
+  const numero=numeroWhatsApp(cliente?.telefone||cliente?.whatsapp||'');
+  if(numero.length<12){
+    showToast('Telefone do cliente inválido para WhatsApp.');
+    return;
+  }
+  const checklist=Array.isArray(o.checklist)?o.checklist.join(' • '):String(o.checklist||'Nenhuma observação registrada');
+  const pecas=pecasDaOS(o);
+  const linhasPecas=pecas.length
+    ?pecas.map(p=>'- '+(p.descricao||'Peça')+' — '+money(p.valor)).join('\n')
+    :'- Nenhuma peça adicionada';
+  const mensagem=[
+    '*S.O.S MOTOS*',
+    '*ORDEM DE SERVIÇO #'+String(o.id).slice(-6)+'*',
+    '',
+    '*Cliente:* '+(cliente?.nome||'Não informado'),
+    '*Moto:* '+([moto?.marca,moto?.modelo].filter(Boolean).join(' ')||'Não informada'),
+    '*Placa:* '+(moto?.placa||'Não informada'),
+    '*Data:* '+new Date(o.criadoEm).toLocaleDateString('pt-BR'),
+    '',
+    '*Checklist:*',
+    checklist,
+    '',
+    '*Serviço / diagnóstico:*',
+    textoServicoOS(o),
+    '',
+    '*Peças:*',
+    linhasPecas,
+    '',
+    '*Mão de obra:* '+money(o.maoObra),
+    '*Total da O.S.:* '+money(o.total),
+    '*Status:* '+o.status
+  ].join('\n');
+  window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(mensagem),'_blank','noopener');
 }
 
 function renderOrdens(){
