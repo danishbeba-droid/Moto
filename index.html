@@ -651,6 +651,66 @@ main{padding:14px}
   <div id="listaOrdens" class="serviceList"></div>
 </section>
 
+<section id="orcamentos" class="view">
+  <div class="pageHead">
+    <h2>Orçamentos</h2>
+    <button type="button" class="primary" onclick="abrirNovoOrcamento()">+ Novo</button>
+  </div>
+  <div id="listaOrcamentos" class="serviceList"></div>
+</section>
+
+<section id="novoOrcamento" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="showView('orcamentos')">‹ Cancelar</button>
+    <h2 id="orcFormTitle" class="formTitle">Novo orçamento</h2>
+  </div>
+  <div class="formCard">
+    <div class="field">
+      <label>Cliente</label>
+      <select id="orcCliente" onchange="carregarMotosOrcamento()"></select>
+    </div>
+    <div class="field">
+      <label>Moto</label>
+      <select id="orcMoto"></select>
+    </div>
+    <div class="field">
+      <label>Serviço / diagnóstico</label>
+      <textarea id="orcDescricao" rows="4" placeholder="Descreva os serviços do orçamento"></textarea>
+    </div>
+    <div class="partsHead">
+      <label>Peças</label>
+      <button type="button" class="addPart" onclick="adicionarItemOrcamento()">+ Adicionar</button>
+    </div>
+    <div id="orcItensLista" class="partsList"></div>
+    <div class="field">
+      <label>Mão de obra</label>
+      <input id="orcMaoObra" type="text" inputmode="decimal" placeholder="0,00" oninput="atualizarTotalOrcamento()">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select id="orcStatus">
+        <option>Rascunho</option>
+        <option>Enviado</option>
+        <option>Aprovado</option>
+        <option>Não aprovado</option>
+      </select>
+    </div>
+    <div class="totalOS">
+      <span>Total do orçamento</span>
+      <strong id="orcTotal">R$ 0,00</strong>
+    </div>
+    <button id="salvarOrcBtn" type="button" class="primary saveFull" onclick="salvarOrcamento()">Salvar orçamento</button>
+  </div>
+</section>
+
+<section id="orcamentoDetalhe" class="view">
+  <div class="detailTop">
+    <button type="button" class="secondary" onclick="showView('orcamentos')">‹ Voltar</button>
+    <h2 class="formTitle">Detalhes</h2>
+  </div>
+  <div id="dadosOrcamentoDetalhe" class="motoDetailCard"></div>
+</section>
+
 </main>
 
   <button id="fabBtn" class="fab" aria-label="Nova OS">+</button>
@@ -756,14 +816,18 @@ main{padding:14px}
 const KEY='SOS_MOTOS_REINICIO_CLIENTES_V2';
 const KEY_MOTOS='SOS_MOTOS_REINICIO_MOTOS_V1';
 const KEY_OS='SOS_MOTOS_ORDENS_V1';
+const KEY_ORC='SOS_MOTOS_ORCAMENTOS_V1';
 let clientes=carregarClientes();
 let motos=carregarMotos();
 let ordens=carregarOS();
+let orcamentos=carregarOrcamentos();
 let clienteSelecionadoId=0;
 let motoSelecionadaId=0;
 let osSelecionadaId=0;
 let osEditandoId=0;
 let retornoOS='ordens';
+let orcamentoSelecionadoId=0;
+let orcamentoEditandoId=0;
 let toastTimer=null;
 
 function el(id){return document.getElementById(id)}
@@ -807,6 +871,19 @@ function persistirOS(){
   localStorage.setItem(KEY_OS,JSON.stringify(ordens));
 }
 
+function carregarOrcamentos(){
+  try{
+    const d=JSON.parse(localStorage.getItem(KEY_ORC)||'[]');
+    return Array.isArray(d)?d:[];
+  }catch(e){
+    return [];
+  }
+}
+
+function persistirOrcamentos(){
+  localStorage.setItem(KEY_ORC,JSON.stringify(orcamentos));
+}
+
 function showToast(text){
   clearTimeout(toastTimer);
   el('toast').textContent=text;
@@ -818,6 +895,7 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   if(id==='clientes')renderClientes();
   if(id==='ordens')renderOrdens();
+  if(id==='orcamentos')renderOrcamentos();
   if(id==='inicio')renderDashboard();
   window.scrollTo(0,0);
 }
@@ -1473,6 +1551,209 @@ function renderDashboard(){
   `;
 }
 
+function preencherClientesOrcamento(){
+  el('orcCliente').innerHTML=clientes
+    .filter(c=>motos.some(m=>m.clienteId===c.id))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+    .map(c=>`<option value="${c.id}">${safe(c.nome)}</option>`)
+    .join('');
+}
+
+function carregarMotosOrcamento(){
+  const clienteId=Number(el('orcCliente').value||0);
+  el('orcMoto').innerHTML=motos.filter(m=>m.clienteId===clienteId).map(m=>`
+    <option value="${m.id}">${safe([m.marca,m.modelo].filter(Boolean).join(' '))} — ${safe(m.placa)}</option>
+  `).join('');
+}
+
+function abrirNovoOrcamento(){
+  if(!clientes.length || !motos.length){
+    showToast('Cadastre um cliente e uma moto primeiro.');
+    showView('clientes');
+    return;
+  }
+  orcamentoEditandoId=0;
+  preencherClientesOrcamento();
+  carregarMotosOrcamento();
+  el('orcFormTitle').textContent='Novo orçamento';
+  el('salvarOrcBtn').textContent='Salvar orçamento';
+  el('orcDescricao').value='';
+  el('orcItensLista').innerHTML='';
+  adicionarItemOrcamento();
+  el('orcMaoObra').value='';
+  el('orcStatus').value='Rascunho';
+  atualizarTotalOrcamento();
+  showView('novoOrcamento');
+}
+
+function adicionarItemOrcamento(descricao='',valor=''){
+  const row=document.createElement('div');
+  row.className='partRow';
+  row.innerHTML=`
+    <input class="orcItemDescricao" type="text" placeholder="Nome da peça" value="${safe(descricao)}">
+    <input class="orcItemValor" type="text" inputmode="decimal" placeholder="R$ 0,00" value="${safe(valor)}" oninput="atualizarTotalOrcamento()">
+    <button type="button" class="removePart" aria-label="Remover peça" onclick="removerItemOrcamento(this)">×</button>
+  `;
+  el('orcItensLista').appendChild(row);
+}
+
+function removerItemOrcamento(botao){
+  botao.closest('.partRow').remove();
+  if(!el('orcItensLista').children.length)adicionarItemOrcamento();
+  atualizarTotalOrcamento();
+}
+
+function lerItensOrcamento(){
+  return [...el('orcItensLista').querySelectorAll('.partRow')].map(row=>({
+    descricao:row.querySelector('.orcItemDescricao').value.trim(),
+    valor:parseMoney(row.querySelector('.orcItemValor').value)
+  })).filter(i=>i.descricao||i.valor);
+}
+
+function atualizarTotalOrcamento(){
+  const itens=lerItensOrcamento();
+  const total=itens.reduce((soma,i)=>soma+i.valor,0)+parseMoney(el('orcMaoObra').value);
+  el('orcTotal').textContent=money(total);
+  return total;
+}
+
+function salvarOrcamento(){
+  const clienteId=Number(el('orcCliente').value||0);
+  const motoId=Number(el('orcMoto').value||0);
+  const descricao=el('orcDescricao').value.trim();
+  const itens=lerItensOrcamento();
+  const valorPecas=itens.reduce((soma,i)=>soma+i.valor,0);
+  const maoObra=parseMoney(el('orcMaoObra').value);
+  const status=el('orcStatus').value;
+  if(!clienteId||!motoId){showToast('Selecione cliente e moto.');return}
+  if(!descricao){showToast('Informe o serviço do orçamento.');return}
+  const dados={clienteId,motoId,descricao,itens,valorPecas,maoObra,total:valorPecas+maoObra,status};
+  if(orcamentoEditandoId){
+    const o=orcamentos.find(x=>x.id===orcamentoEditandoId);
+    if(!o)return;
+    Object.assign(o,dados,{atualizadoEm:new Date().toISOString()});
+    orcamentoSelecionadoId=o.id;
+    persistirOrcamentos();
+    renderDetalheOrcamento();
+    showView('orcamentoDetalhe');
+    showToast('Orçamento atualizado.');
+  }else{
+    const o={id:Date.now(),...dados,criadoEm:new Date().toISOString()};
+    orcamentos.push(o);
+    persistirOrcamentos();
+    showView('orcamentos');
+    showToast('Orçamento salvo.');
+  }
+  orcamentoEditandoId=0;
+}
+
+function renderOrcamentos(){
+  const lista=el('listaOrcamentos');
+  if(!lista)return;
+  const arr=orcamentos.slice().sort((a,b)=>b.criadoEm.localeCompare(a.criadoEm));
+  lista.innerHTML=arr.length?arr.map(o=>{
+    const cliente=clientes.find(c=>c.id===o.clienteId);
+    const moto=motos.find(m=>m.id===o.motoId);
+    return `
+      <button type="button" class="osCard osButton" onclick="abrirDetalheOrcamento(${o.id})">
+        <div class="historyTop">
+          <b>Orçamento #${String(o.id).slice(-6)}</b>
+          <span class="statusBadge">${safe(o.status)}</span>
+        </div>
+        <h3>${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))}</h3>
+        <p>${safe(cliente?.nome||'Cliente')} • ${safe(moto?.placa||'')}</p>
+        <p>${safe(o.descricao)}</p>
+        <strong>${money(o.total)}</strong>
+      </button>
+    `;
+  }).join(''):'<div class="emptyList">Nenhum orçamento cadastrado.</div>';
+}
+
+function abrirDetalheOrcamento(id){
+  const o=orcamentos.find(x=>x.id===Number(id));
+  if(!o)return;
+  orcamentoSelecionadoId=o.id;
+  renderDetalheOrcamento();
+  showView('orcamentoDetalhe');
+}
+
+function renderDetalheOrcamento(){
+  const o=orcamentos.find(x=>x.id===orcamentoSelecionadoId);
+  if(!o)return;
+  const cliente=clientes.find(c=>c.id===o.clienteId);
+  const moto=motos.find(m=>m.id===o.motoId);
+  const itens=Array.isArray(o.itens)?o.itens:[];
+  el('dadosOrcamentoDetalhe').innerHTML=`
+    <div class="historyTop">
+      <b>Orçamento #${String(o.id).slice(-6)}</b>
+      <span class="statusBadge">${safe(o.status)}</span>
+    </div>
+    <div class="osDetailSection"><h3>Cliente e moto</h3><p>${safe(cliente?.nome||'Cliente')}\n${safe([moto?.marca,moto?.modelo].filter(Boolean).join(' '))} • ${safe(moto?.placa||'')}</p></div>
+    <div class="osDetailSection"><h3>Serviço / diagnóstico</h3><p>${safe(o.descricao)}</p></div>
+    <div class="osDetailSection">
+      <h3>Peças</h3>
+      ${itens.length?itens.map(i=>`<div class="detailLine"><span>${safe(i.descricao||'Peça')}</span><b>${money(i.valor)}</b></div>`).join(''):'<p>Nenhuma peça adicionada.</p>'}
+      <div class="detailLine"><span>Mão de obra</span><b>${money(o.maoObra)}</b></div>
+      <div class="detailLine total"><strong>Total</strong><strong>${money(o.total)}</strong></div>
+    </div>
+    <div class="osActions">
+      <button type="button" class="editOS" onclick="editarOrcamento(${o.id})">Editar</button>
+      <button type="button" class="shareOS" style="margin-top:0" onclick="enviarOrcamentoWhatsApp(${o.id})">WhatsApp</button>
+    </div>
+  `;
+}
+
+function editarOrcamento(id){
+  const o=orcamentos.find(x=>x.id===Number(id));
+  if(!o)return;
+  orcamentoEditandoId=o.id;
+  preencherClientesOrcamento();
+  el('orcCliente').value=String(o.clienteId);
+  carregarMotosOrcamento();
+  el('orcMoto').value=String(o.motoId);
+  el('orcFormTitle').textContent='Editar orçamento #'+String(o.id).slice(-6);
+  el('salvarOrcBtn').textContent='Salvar alterações';
+  el('orcDescricao').value=o.descricao||'';
+  el('orcItensLista').innerHTML='';
+  const itens=Array.isArray(o.itens)?o.itens:[];
+  if(itens.length)itens.forEach(i=>adicionarItemOrcamento(i.descricao,i.valor?String(i.valor).replace('.',','):''));
+  else adicionarItemOrcamento();
+  el('orcMaoObra').value=o.maoObra?String(o.maoObra).replace('.',','):'';
+  el('orcStatus').value=o.status||'Rascunho';
+  atualizarTotalOrcamento();
+  showView('novoOrcamento');
+}
+
+function enviarOrcamentoWhatsApp(id){
+  const o=orcamentos.find(x=>x.id===Number(id));
+  if(!o)return;
+  const cliente=clientes.find(c=>c.id===o.clienteId);
+  const moto=motos.find(m=>m.id===o.motoId);
+  const numero=numeroWhatsApp(cliente?.telefone||cliente?.whatsapp||'');
+  if(numero.length<12){showToast('Telefone do cliente inválido para WhatsApp.');return}
+  const itens=Array.isArray(o.itens)?o.itens:[];
+  const linhasItens=itens.length?itens.map(i=>'- '+(i.descricao||'Peça')+' — '+money(i.valor)).join('\n'):'- Nenhuma peça adicionada';
+  const mensagem=[
+    '*S.O.S MOTOS*',
+    '*ORÇAMENTO #'+String(o.id).slice(-6)+'*',
+    '',
+    '*Cliente:* '+(cliente?.nome||'Não informado'),
+    '*Moto:* '+([moto?.marca,moto?.modelo].filter(Boolean).join(' ')||'Não informada'),
+    '*Placa:* '+(moto?.placa||'Não informada'),
+    '',
+    '*Serviço / diagnóstico:*',
+    o.descricao,
+    '',
+    '*Peças:*',
+    linhasItens,
+    '',
+    '*Mão de obra:* '+money(o.maoObra),
+    '*Total:* '+money(o.total),
+    '*Status:* '+o.status
+  ].join('\n');
+  window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(mensagem),'_blank','noopener');
+}
+
 /* Conecta SOMENTE os botões existentes da home. */
 document.querySelectorAll('[data-action]').forEach(btn=>{
   btn.onclick=()=>{
@@ -1480,6 +1761,7 @@ document.querySelectorAll('[data-action]').forEach(btn=>{
     if(a==='Início')showView('inicio');
     else if(a==='Clientes')showView('clientes');
     else if(a==='Ordens')showView('ordens');
+    else if(a==='Orçamentos')showView('orcamentos');
     else future(a);
   };
 });
