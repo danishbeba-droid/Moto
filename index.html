@@ -588,14 +588,7 @@ main{padding:14px}
 
     <div class="field">
       <label>Checklist de entrada</label>
-      <div id="osChecklist" class="checkGrid">
-        <label class="checkItem"><input type="checkbox" value="Luzes"> Luzes</label>
-        <label class="checkItem"><input type="checkbox" value="Freios"> Freios</label>
-        <label class="checkItem"><input type="checkbox" value="Pneus"> Pneus</label>
-        <label class="checkItem"><input type="checkbox" value="Óleo"> Óleo</label>
-        <label class="checkItem"><input type="checkbox" value="Corrente"> Corrente</label>
-        <label class="checkItem"><input type="checkbox" value="Buzina e painel"> Buzina e painel</label>
-      </div>
+      <textarea id="osChecklistTexto" rows="4" placeholder="Descreva o estado da moto, avarias e itens verificados"></textarea>
     </div>
 
     <div class="field">
@@ -1157,7 +1150,7 @@ function abrirNovaOS(){
     .join('');
 
   el('osServico').value='';
-  el('osChecklist').querySelectorAll('input').forEach(i=>i.checked=false);
+  el('osChecklistTexto').value='';
   el('osPecasLista').innerHTML='';
   adicionarPeca();
   el('osMaoObra').value='';
@@ -1210,7 +1203,7 @@ function salvarOS(){
   const clienteId=Number(el('osCliente').value||0);
   const motoId=Number(el('osMoto').value||0);
   const servico=el('osServico').value.trim();
-  const checklist=[...el('osChecklist').querySelectorAll('input:checked')].map(i=>i.value);
+  const checklist=el('osChecklistTexto').value.trim();
   const pecas=lerPecasOS();
   const valorPecas=pecas.reduce((soma,p)=>soma+p.valor,0);
   const maoObra=parseMoney(el('osMaoObra').value);
@@ -1276,7 +1269,7 @@ function renderDetalheOS(){
   const cliente=clientes.find(c=>c.id===o.clienteId);
   const moto=motos.find(m=>m.id===o.motoId);
   const pecas=pecasDaOS(o);
-  const checklist=Array.isArray(o.checklist)?o.checklist:[];
+  const checklist=Array.isArray(o.checklist)?o.checklist.join(' • '):String(o.checklist||'');
   el('dadosOSDetalhe').innerHTML=`
     <div class="historyTop">
       <b>OS #${String(o.id).slice(-6)}</b>
@@ -1288,7 +1281,7 @@ function renderDetalheOS(){
     </div>
     <div class="osDetailSection">
       <h3>Checklist</h3>
-      <p>${checklist.length?safe(checklist.join(' • ')):'Nenhum item marcado'}</p>
+      <p>${checklist?safe(checklist):'Nenhuma observação registrada'}</p>
     </div>
     <div class="osDetailSection">
       <h3>Serviço / diagnóstico</h3>
