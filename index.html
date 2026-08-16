@@ -498,9 +498,9 @@ main{padding:14px}
           <span>Clientes</span>
         </button>
 
-        <button data-action="Nova OS">
+        <button data-action="Ordens">
           <b>🛠️</b>
-          <span>Nova OS</span>
+          <span>O.S.</span>
         </button>
 
         <button data-action="Orçamentos">
@@ -639,8 +639,8 @@ main{padding:14px}
 
 <section id="ordens" class="view">
   <div class="pageHead">
-    <h2>Ordens de serviço</h2>
-    <button type="button" class="primary" onclick="abrirNovaOS()">+ Nova OS</button>
+    <h2>O.S.</h2>
+    <button type="button" class="primary" onclick="abrirNovaOS()">+ Nova O.S.</button>
   </div>
   <div id="listaOrdens" class="serviceList"></div>
 </section>
@@ -656,8 +656,8 @@ main{padding:14px}
     <button class="navBtn" data-action="Clientes">
       <b>👤</b><span>Clientes</span>
     </button>
-    <button class="navBtn center" data-action="Nova OS">
-      <b>＋</b><span>Nova OS</span>
+    <button class="navBtn center" data-action="Ordens">
+      <b>🛠️</b><span>O.S.</span>
     </button>
     <button class="navBtn" data-action="Orçamentos">
       <b>▧</b><span>Orçamentos</span>
@@ -1403,7 +1403,7 @@ document.querySelectorAll('[data-action]').forEach(btn=>{
     const a=btn.dataset.action;
     if(a==='Início')showView('inicio');
     else if(a==='Clientes')showView('clientes');
-    else if(a==='Nova OS')abrirNovaOS();
+    else if(a==='Ordens')showView('ordens');
     else future(a);
   };
 });
